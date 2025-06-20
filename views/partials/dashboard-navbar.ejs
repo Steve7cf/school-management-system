@@ -1,0 +1,21 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+  <div class="container-fluid">
+    <button class="navbar-toggler d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand fw-bold" href="/dashboard">School Management System</a>
+    <div class="d-flex align-items-center ms-auto">
+      <span class="text-white me-3 d-none d-md-inline">
+        <i class="fas fa-user-circle me-1"></i>
+        <%= user.firstName %> <%= user.lastName %> (<%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>)
+      </span>
+      <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+    </div>
+  </div>
+</nav>
+<style>
+  .navbar .navbar-brand {
+    font-size: 1.25rem;
+    letter-spacing: 1px;
+  }
+</style> 

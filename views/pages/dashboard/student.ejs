@@ -1,0 +1,160 @@
+<%- include('../../partials/messages') %>
+
+<div class="container-fluid py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">Welcome, <%= user.firstName %> <%= user.lastName %></h2>
+                    <p class="card-text">Your Class: <%= data.className %></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <!-- Subjects Card -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <img src="/subject.png" alt="Subjects" class="dashboard-icon mb-3" style="width: 48px; height: 48px;">
+                    <h3 class="card-title"><%= data.subjectCount %></h3>
+                    <p class="card-text text-muted">Subjects</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Exams Card -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <img src="/exam.png" alt="Exams" class="dashboard-icon mb-3" style="width: 48px; height: 48px;">
+                    <h3 class="card-title"><%= data.upcomingExamsCount %></h3>
+                    <p class="card-text text-muted">Upcoming Exams</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Card -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <img src="/attendance.png" alt="Attendance" class="dashboard-icon mb-3" style="width: 48px; height: 48px;">
+                    <h3 class="card-title"><%= data.attendanceRate %>%</h3>
+                    <p class="card-text text-muted">Attendance Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <!-- Recent Announcements -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Recent Announcements</h4>
+                    <a href="/announcements" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <% if (data.recentAnnouncements && data.recentAnnouncements.length > 0) { %>
+                            <% data.recentAnnouncements.forEach(announcement => { %>
+                                <div class="list-group-item">
+                                    <h6 class="mb-1"><%= announcement.title %></h6>
+                                    <p class="mb-1 text-muted"><%= announcement.content %></p>
+                                    <small class="text-muted">
+                                        <%= new Date(announcement.createdAt).toLocaleDateString() %>
+                                    </small>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-center text-muted py-3">
+                                No recent announcements
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Exams -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">Upcoming Exams</h4>
+                    <a href="/exams" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <% if (data.upcomingExams && data.upcomingExams.length > 0) { %>
+                            <% data.upcomingExams.forEach(exam => { %>
+                                <div class="list-group-item">
+                                    <h6 class="mb-1"><%= exam.title %></h6>
+                                    <p class="mb-1">
+                                        <span class="badge bg-primary"><%= exam.subject %></span>
+                                    </p>
+                                    <small class="text-muted">
+                                        Date: <%= new Date(exam.date).toLocaleDateString() %>
+                                        <% if (exam.startTime) { %>
+                                            | Time: <%= exam.startTime %>
+                                        <% } %>
+                                    </small>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-center text-muted py-3">
+                                No upcoming exams
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.dashboard-icon {
+    opacity: 0.8;
+}
+
+.list-group-item {
+    border: none;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.list-group-item:last-child {
+    margin-bottom: 0;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.5em 1em;
+}
+
+.btn-outline-primary {
+    border-width: 1px;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+</style> 

@@ -1,0 +1,89 @@
+<div class="container-fluid py-4">
+    <h1 class="h3 mb-4">Attendance Report</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Filter Report</h6>
+        </div>
+        <div class="card-body">
+            <form action="/attendance/report" method="GET">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" name="date" id="date" class="form-control" value="<%= selectedDate || '' %>">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="gradeLevel" class="form-label">Grade</label>
+                        <select name="gradeLevel" id="gradeLevel" class="form-select">
+                            <option value="">All Grades</option>
+                            <% [...new Set(classes.map(c => c.gradeLevel))].sort().forEach(gl => { %>
+                                <option value="<%= gl %>" <%= (selectedGradeLevel == gl) ? 'selected' : '' %>>Form <%= gl %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="section" class="form-label">Section</label>
+                        <select name="section" id="section" class="form-select">
+                            <option value="">All Sections</option>
+                             <% [...new Set(classes.map(c => c.section))].sort().forEach(s => { %>
+                                <option value="<%= s %>" <%= (selectedSection == s) ? 'selected' : '' %>>Section <%= s %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary me-2">Filter</button>
+                        <a href="/attendance/report" class="btn btn-secondary">Clear</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Student</th>
+                            <th>Class</th>
+                            <th>Subject</th>
+                            <th>Status</th>
+                            <th>Recorded By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (attendance && attendance.length > 0) { %>
+                            <% attendance.forEach(record => { %>
+                                <tr>
+                                    <td><%= new Date(record.date).toLocaleDateString() %></td>
+                                    <td>
+                                        <% if (record.studentId) { %>
+                                            <%= record.studentId.firstName %> <%= record.studentId.lastName %>
+                                            (<%= record.studentId.studentId %>)
+                                        <% } else { %>
+                                            N/A
+                                        <% } %>
+                                    </td>
+                                    <td>Form <%= selectedGradeLevel || 'N/A' %> - Section <%= selectedSection || 'N/A' %></td>
+                                    <td><%= record.subjectId ? record.subjectId.name : 'N/A' %></td>
+                                    <td>
+                                        <span class="badge bg-<%= record.status === 'Present' ? 'success' : (record.status === 'Absent' ? 'danger' : 'warning') %>">
+                                            <%= record.status %>
+                                        </span>
+                                    </td>
+                                    <td><%= record.teacherId ? `${record.teacherId.firstName} ${record.teacherId.lastName}` : 'N/A' %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center">No attendance records found for the selected filters.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div> 

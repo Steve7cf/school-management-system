@@ -1,0 +1,85 @@
+<%- include('../../partials/messages') %>
+
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Edit Teacher</h2>
+        <a href="/teachers" class="btn btn-outline-secondary">
+          <img src="/class.png" alt="Back" style="width: 20px; height: 20px;" class="me-2">
+          Back to List
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title mb-0">Edit Teacher Information</h4>
+        </div>
+        <div class="card-body">
+          <form action="/teachers/edit/<%= teacher._id %>" method="POST">
+            <div class="mb-3">
+              <label class="form-label">First Name</label>
+              <input type="text" name="firstName" class="form-control" value="<%= teacher.firstName %>" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Last Name</label>
+              <input type="text" name="lastName" class="form-control" value="<%= teacher.lastName %>" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control" value="<%= teacher.email %>" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Subjects (max 3)</label>
+              <select name="subjects" class="form-select" multiple size="6" onchange="limitSubjects(this)">
+                <% if (subjects && subjects.length > 0) { %>
+                  <% subjects.forEach(function(subject) { %>
+                    <option value="<%= subject._id %>"
+                      <%= teacher.subjects && teacher.subjects.map(String).includes(String(subject._id)) ? 'selected' : '' %>>
+                      <%= subject.name %> (<%= subject.code %>)
+                    </option>
+                  <% }); %>
+                <% } %>
+              </select>
+              <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple subjects.</small>
+              <div id="subjectLimitWarning" class="text-danger mt-2" style="display:none;">You can select up to 3 subjects only.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label"><strong>Assign Class & Section(s)</strong></label>
+              <select name="assignedClasses" class="form-select" multiple size="6">
+                <% ['1','2','3','4'].forEach(function(form) { %>
+                  <% ['A','B','C'].forEach(function(section) { %>
+                    <% const assigned = teacher.assignedClasses && teacher.assignedClasses.some(ac => ac.gradeLevel === form && ac.section === section); %>
+                    <option value="<%= form %>-<%= section %>" <%= assigned ? 'selected' : '' %>>Form <%= form %> - Section <%= section %></option>
+                  <% }); %>
+                <% }); %>
+              </select>
+              <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple class-section pairs.</small>
+            </div>
+            <div class="d-flex justify-content-between">
+              <a href="/teachers" class="btn btn-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary">Update Teacher</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function limitSubjects(select) {
+  const max = 3;
+  const warning = document.getElementById('subjectLimitWarning');
+  if (select.selectedOptions.length > max) {
+    warning.style.display = 'block';
+    // Deselect the last selected option
+    select.selectedOptions[max].selected = false;
+  } else {
+    warning.style.display = 'none';
+  }
+}
+</script> 

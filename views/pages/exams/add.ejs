@@ -1,0 +1,141 @@
+<!-- Add Exam Page -->
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Add New Exam</h4>
+                </div>
+                <div class="card-body">
+                    <form action="/exams/add" method="POST">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Exam Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Exam Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="date" name="date" required>
+                        </div>
+                        <% if (user.role === 'teacher') { %>
+                            <input type="hidden" name="teacherId" value="<%= user._id %>">
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject</label>
+                                <select class="form-select" id="subject" name="subject" required>
+                                    <option value="">Select Subject</option>
+                                    <% subjects.forEach(subject => { %>
+                                        <option value="<%= subject._id %>"><%= subject.name %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="class" class="form-label">Class & Section</label>
+                                <select class="form-select" id="class" name="class" required>
+                                    <option value="">Select Class & Section</option>
+                                    <% assignedClasses.forEach(cls => { %>
+                                        <option value="<%= cls.gradeLevel %>-<%= cls.section %>">Form <%= cls.gradeLevel %> - Section <%= cls.section %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                        <% } else { %>
+                            <div class="mb-3">
+                                <label for="teacherId" class="form-label">Teacher</label>
+                                <select class="form-select" id="teacherId" name="teacherId" required>
+                                    <option value="">Select a teacher</option>
+                                    <% if (teachers && teachers.length > 0) { %>
+                                        <% teachers.forEach(teacher => { %>
+                                            <option value="<%= teacher._id %>"><%= teacher.firstName %> <%= teacher.lastName %></option>
+                                        <% }) %>
+                                    <% } %>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject</label>
+                                <select class="form-select" id="subject" name="subject" required>
+                                    <option value="">Select a teacher first</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="section" class="form-label">Section</label>
+                                <select class="form-select" id="section" name="section" required>
+                                    <option value="">Select Section</option>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                </select>
+                            </div>
+                        <% } %>
+                        <div class="mb-3">
+                            <label for="gradeLevel" class="form-label">Grade Level</label>
+                            <input type="number" class="form-control" id="gradeLevel" name="gradeLevel" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Exam Type</label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="Midterm">Midterm</option>
+                                <option value="Final">Final</option>
+                                <option value="Quiz">Quiz</option>
+                                <option value="Assignment">Assignment</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="totalMarks" class="form-label">Total Marks</label>
+                            <input type="number" class="form-control" id="totalMarks" name="totalMarks" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration" name="duration" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="startTime" class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="startTime" name="startTime" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="term" class="form-label">Term</label>
+                            <select class="form-select" id="term" name="term" required>
+                                <option value="Term 1">Term 1</option>
+                                <option value="Term 2">Term 2</option>
+                                <option value="Term 3">Term 3</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Add Exam</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const teacherSelect = document.getElementById('teacherId');
+    const subjectSelect = document.getElementById('subject');
+
+    teacherSelect.addEventListener('change', function() {
+        const teacherId = this.value;
+        subjectSelect.innerHTML = '<option value="">Loading...</option>';
+        if (!teacherId) {
+            subjectSelect.innerHTML = '<option value="">Select a teacher first</option>';
+            return;
+        }
+        fetch(`/api/subjects/by-teacher/${teacherId}`)
+            .then(res => res.json())
+            .then(subjects => {
+                subjectSelect.innerHTML = '';
+                if (subjects.length === 0) {
+                    subjectSelect.innerHTML = '<option value="">No subjects found</option>';
+                } else {
+                    subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject._id;
+                        option.textContent = subject.name;
+                        subjectSelect.appendChild(option);
+                    });
+                }
+            });
+    });
+});
+</script> 

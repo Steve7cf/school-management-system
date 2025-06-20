@@ -1,0 +1,57 @@
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">Messages</h2>
+        <% if (user.role === 'teacher') { %>
+            <a href="/messages/new" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>New Message
+            </a>
+        <% } %>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <% if (messages && messages.length > 0) { %>
+                <ul class="list-group">
+                    <% messages.forEach(msg => { %>
+                        <li class="list-group-item">
+                            <strong>
+                                <% if (user.role === 'teacher') { %>
+                                    To: 
+                                    <% if (msg.receiver) { %>
+                                        <%= msg.receiver.firstName %> <%= msg.receiver.lastName %>
+                                    <% } else if (msg.receiver && msg.receiver._id) { %>
+                                        [Parent ID: <%= msg.receiver._id %>]
+                                    <% } else if (msg.receiver) { %>
+                                        [Parent: <%= msg.receiver %>]
+                                    <% } else { %>
+                                        [Deleted Parent]
+                                    <% } %>
+                                <% } else { %>
+                                    From: 
+                                    <% if (msg.sender) { %>
+                                        <%= msg.sender.firstName %> <%= msg.sender.lastName %>
+                                    <% } else if (msg.sender && msg.sender._id) { %>
+                                        [Teacher ID: <%= msg.sender._id %>]
+                                    <% } else if (msg.sender) { %>
+                                        [Teacher: <%= msg.sender %>]
+                                    <% } else { %>
+                                        [Deleted Teacher]
+                                    <% } %>
+                                <% } %>
+                            </strong>
+                            <br>
+                            <span><%= msg.message %></span>
+                            <br>
+                            <small class="text-muted"><%= msg.createdAt.toLocaleString() %></small>
+                            <% 
+                                let receiverId = msg.receiver && (msg.receiver._id ? msg.receiver._id.toString() : msg.receiver.toString());
+                                if (receiverId === user.id.toString()) { 
+                            %>
+                                <a href="/messages/reply/<%= msg._id %>" class="btn btn-sm btn-outline-primary float-end">Reply</a>
+                            <% } %>
+                        </li>
+                    <% }) %>
+                </ul>
+            <% } else { %>
+                <p class="text-center text-muted">No messages found.</p>
+            <% } %>
+ 

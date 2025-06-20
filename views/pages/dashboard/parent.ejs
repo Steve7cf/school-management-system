@@ -1,0 +1,105 @@
+<div class="container-fluid py-4">
+    <h1 class="h3 mb-4">Parent Dashboard</h1>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <!-- My Child Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">My Child</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800"><%= student ? 1 : 0 %></div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-child fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Upcoming Exams Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Upcoming Exams</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <%= typeof upcomingExamsCount !== 'undefined' ? upcomingExamsCount : 0 %>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Announcements Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Announcements</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <%= typeof announcementsCount !== 'undefined' ? announcementsCount : 0 %>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-bullhorn fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Messages Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <a href="/messages" style="text-decoration: none;">
+                <div class="card border-left-danger shadow h-100 py-2">
+                    <div class="card-body text-center">
+                        <img src="/mail.png" alt="Messages" class="dashboard-icon mb-3" style="width: 48px; height: 48px;">
+                        <h3 class="card-title">Messages</h3>
+                        <p class="text-muted">Messages from Teachers</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">My Child</h6>
+                </div>
+                <div class="card-body">
+                    <% if (student) { %>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Grade Level</th>
+                                        <th>Student ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><%= student.firstName %> <%= student.lastName %></td>
+                                        <td><%= student.gradeLevel %></td>
+                                        <td><%= student.studentId %></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <p class="text-center">No student found for this parent.</p>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

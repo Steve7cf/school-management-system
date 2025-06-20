@@ -1,0 +1,22 @@
+POST http://localhost:3000/login/student
+Content-Type: application/json
+
+###
+POST http://localhost:3000/login/parent
+Content-Type: application/json
+
+###
+POST http://localhost:3000/login/teacher
+Content-Type: application/json
+
+###
+POST http://localhost:3000/register/student
+Content-Type: application/json
+
+###
+POST http://localhost:3000/register/parent
+Content-Type: application/json
+
+###
+POST http://localhost:3000/register/teacher
+Content-Type: application/json

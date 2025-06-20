@@ -1,0 +1,104 @@
+<div class="d-none d-lg-flex align-items-center p-3 border-bottom mb-2">
+  <img src="/avatar.png" alt="Avatar" class="rounded-circle me-2" style="width:40px;height:40px;object-fit:cover;">
+  <div>
+    <div class="fw-bold"><%= user.firstName %> <%= user.lastName %></div>
+    <div class="text-muted small"><%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %></div>
+  </div>
+</div>
+<!-- Sidebar menu -->
+<ul class="nav flex-column">
+    <% if (typeof user !== 'undefined' && user) { %>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/dashboard') ? 'active' : '' %>" href="/dashboard">
+                <i class="fas fa-home me-2"></i>
+                Dashboard
+            </a>
+        </li>
+        <% if (user.role === 'admin') { %>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/students') ? 'active' : '' %>" href="/students">
+                <i class="fas fa-user-graduate me-2"></i>
+                Students
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/teachers') ? 'active' : '' %>" href="/teachers">
+                <i class="fas fa-chalkboard-teacher me-2"></i>
+                Teachers
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/classes') ? 'active' : '' %>" href="/classes">
+                <i class="fas fa-school me-2"></i>
+                Classes
+            </a>
+        </li>
+        <% } %>
+        <% if (['admin', 'teacher'].includes(user.role)) { %>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/subjects') ? 'active' : '' %>" href="/subjects">
+                <i class="fas fa-book me-2"></i>
+                Subjects
+            </a>
+        </li>
+        <% } %>
+        <% if (['admin', 'teacher', 'student', 'parent'].includes(user.role)) { %>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/attendance') ? 'active' : '' %>" href="/attendance">
+                <i class="fas fa-calendar-check me-2"></i>
+                Attendance
+            </a>
+        </li>
+        <% } %>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/exams') ? 'active' : '' %>" href="/exams">
+                <i class="fas fa-file-alt me-2"></i>
+                Exams
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/results') ? 'active' : '' %>" href="/results">
+                <i class="fas fa-chart-bar me-2"></i>
+                Results
+            </a>
+        </li>
+        <% if (user.role === 'admin') { %>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/announcements') ? 'active' : '' %>" href="/announcements">
+                <i class="fas fa-bullhorn me-2"></i>
+                Announcements
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/logs') ? 'active' : '' %>" href="/logs">
+                <i class="fas fa-clipboard-list me-2"></i>
+                System Logs
+            </a>
+        </li>
+        <% } %>
+        <li class="nav-item">
+            <a class="nav-link <%= (typeof path !== 'undefined' && path === '/profile') ? 'active' : '' %>" href="/profile">
+                <i class="fas fa-user-circle me-2"></i>
+                Profile
+            </a>
+        </li>
+    <% } else { %>
+        <li class="nav-item">
+            <a class="nav-link" href="/auth/login">
+                <i class="fas fa-sign-in-alt me-2"></i>
+                Login
+            </a>
+        </li>
+    <% } %>
+</ul>
+<% if (typeof user !== 'undefined' && user) { %>
+    <hr class="my-3">
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link text-danger" href="/logout">
+                <i class="fas fa-sign-out-alt me-2"></i>
+                Logout
+            </a>
+        </li>
+    </ul>
+<% } %> 

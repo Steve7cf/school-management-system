@@ -1,0 +1,27 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-body text-center">
+          <% if (typeof studentId !== 'undefined') { %>
+            <div class="alert alert-success text-center">
+              <h2>Registration Successful!</h2>
+              <p>Your Admission Number is:</p>
+              <h3 class="fw-bold"><%= studentId %></h3>
+              <p class="mt-3">Please save this Admission Number. You will need it to log in.</p>
+              <a href="/login" class="btn btn-primary mt-3">Go to Login</a>
+            </div>
+          <% } else if (typeof teacherId !== 'undefined') { %>
+            <div class="alert alert-success text-center">
+              <h2>Registration Successful!</h2>
+              <p>Your Teacher ID is:</p>
+              <h3 class="fw-bold"><%= teacherId %></h3>
+              <p class="mt-3">Please save this Teacher ID. You will need it to log in.</p>
+              <a href="/login" class="btn btn-primary mt-3">Go to Login</a>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

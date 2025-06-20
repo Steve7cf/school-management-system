@@ -1,0 +1,120 @@
+<!-- Exams List Page -->
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 mb-0">Exams</h2>
+        <% if (user.role === 'admin' || user.role === 'teacher') { %>
+            <a href="/exams/add" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Schedule New Exam
+            </a>
+        <% } %>
+    </div>
+
+    <!-- Exams Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Subject</th>
+                            <th>Date</th>
+                            <th>Total Marks</th>
+                            <% if (user.role === 'admin' || user.role === 'teacher') { %>
+                                <th>Actions</th>
+                            <% } %>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (exams && exams.length > 0) { %>
+                            <% exams.forEach(exam => { %>
+                                <tr>
+                                    <td><%= exam.title %></td>
+                                    <td>
+                                        <span class="badge bg-<%= 
+                                            exam.type === 'Term' ? 'primary' :
+                                            exam.type === 'Midterm' ? 'info' :
+                                            exam.type === 'Final' ? 'success' :
+                                            exam.type === 'Assignment' ? 'warning' :
+                                            'secondary'
+                                        %>">
+                                            <%= exam.type %>
+                                        </span>
+                                    </td>
+                                    <td><%= exam.subject && exam.subject.name ? exam.subject.name : '' %></td>
+                                    <td><%= new Date(exam.date).toLocaleDateString() %></td>
+                                    <td><%= exam.totalMarks %></td>
+                                    <% if (user.role === 'admin' || user.role === 'teacher') { %>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="/exams/edit/<%= exam._id %>" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-danger delete-exam-btn" data-exam-id="<%= exam._id %>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    <% } %>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="<%= (user.role === 'admin' || user.role === 'teacher') ? 6 : 5 %>" class="text-center">No exams scheduled</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function deleteExam(examId) {
+    if (confirm('Are you sure you want to delete this exam?')) {
+        try {
+            let response = await fetch(`/exams/${examId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (response.status === 405 || response.status === 404) {
+                // Fallback: try POST with _method=DELETE
+                response = await fetch(`/exams/${examId}?_method=DELETE`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                data = { success: false, message: 'Server did not return JSON.' };
+            }
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error deleting exam. Please check your login status or try again.');
+                console.error('Delete exam error:', data, response);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error deleting exam. Please check your network connection or try again.');
+        }
+    }
+}
+
+document.querySelectorAll('.delete-exam-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const examId = this.getAttribute('data-exam-id');
+        deleteExam(examId);
+    });
+});
+</script> 

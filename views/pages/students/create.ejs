@@ -1,0 +1,119 @@
+<!-- Create Student Page -->
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Add New Student</h4>
+                </div>
+                <div class="card-body">
+                    <form action="/students/create" method="POST">
+                        <!-- Personal Information -->
+                        <div class="mb-4">
+                            <h5 class="text-primary">Personal Information</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" name="firstName" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" name="lastName" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date of Birth</label>
+                                    <input type="date" name="dateOfBirth" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Gender</label>
+                                    <select name="gender" class="form-select" required>
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Academic Information -->
+                        <div class="mb-4">
+                            <h5 class="text-primary">Academic Information</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Admission Number</label>
+                                    <input type="text" name="studentId" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Class</label>
+                                    <select name="class" class="form-select" required>
+                                        <option value="">Select Class</option>
+                                        <% if (classes && classes.length > 0) { %>
+                                            <% classes.forEach(classItem => { %>
+                                                <option value="<%= classItem._id %>">
+                                                    <%= classItem.name %> <%= classItem.section %>
+                                                </option>
+                                            <% }); %>
+                                        <% } %>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Section</label>
+                                    <select name="section" class="form-select" required>
+                                        <option value="">Select Section</option>
+                                        <option value="A">A</option>
+                                        <option value="B">B</option>
+                                        <option value="C">C</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="mb-4">
+                            <h5 class="text-primary">Contact Information</h5>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Address</label>
+                                    <textarea name="address" class="form-control" rows="3"><%= student && student.address ? student.address : '' %></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parent/Guardian Information -->
+                        <div class="mb-4">
+                            <h5 class="text-primary">Parent/Guardian Information</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Parent/Guardian Name</label>
+                                    <input type="text" name="guardianName" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Relationship</label>
+                                    <select name="guardianRelation" class="form-select" required>
+                                        <option value="">Select Relationship</option>
+                                        <option value="Father">Father</option>
+                                        <option value="Mother">Mother</option>
+                                        <option value="Guardian">Guardian</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Parent/Guardian Phone</label>
+                                    <input type="tel" name="guardianPhone" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Parent/Guardian Email</label>
+                                    <input type="email" name="guardianEmail" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="/students" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Add Student</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

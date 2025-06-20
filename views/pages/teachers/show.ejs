@@ -1,0 +1,56 @@
+<%- include('../../partials/messages') %>
+
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Teacher Details</h2>
+        <a href="/teachers" class="btn btn-outline-secondary">
+          <img src="/class.png" alt="Back" style="width: 20px; height: 20px;" class="me-2">
+          Back to List
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title mb-0">Teacher Information</h4>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <strong>Name:</strong> <%= teacher.firstName %> <%= teacher.lastName %>
+          </div>
+          <div class="mb-3">
+            <strong>Teacher ID:</strong> <%= teacher.teacherId %>
+          </div>
+          <div class="mb-3">
+            <strong>Email:</strong> <%= teacher.email %>
+          </div>
+          <div class="mb-3">
+            <strong>Subjects:</strong>
+            <% if (teacher.subjects && teacher.subjects.length > 0) { %>
+              <%= teacher.subjects.map(function(subject) {
+                return subject.name + ' (' + subject.code + ')';
+              }).join(', ') %>
+            <% } else { %>
+              <span class="text-muted">No subjects assigned</span>
+            <% } %>
+          </div>
+          <div class="mb-3">
+            <strong>Assigned Classes & Sections:</strong>
+            <% if (teacher.assignedClasses && teacher.assignedClasses.length > 0) { %>
+              <%= teacher.assignedClasses.map(function(cls) {
+                return 'Form ' + cls.gradeLevel + ' - Section ' + cls.section;
+              }).join(', ') %>
+            <% } else { %>
+              <span class="text-muted">No classes/sections assigned</span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,38 @@
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mb-0"><%= subject.name %> (<%= subject.code %>)</h2>
+            <a href="/subjects" class="btn btn-secondary btn-sm">Back to Subjects</a>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Description</dt>
+                <dd class="col-sm-9"><%= subject.description || 'N/A' %></dd>
+
+                <dt class="col-sm-3">Grade Level</dt>
+                <dd class="col-sm-9">Grade <%= subject.gradeLevel %></dd>
+
+                <dt class="col-sm-3">Credits</dt>
+                <dd class="col-sm-9"><%= subject.credits %></dd>
+
+                <dt class="col-sm-3">Teacher</dt>
+                <dd class="col-sm-9">
+                    <% if (subject.teacherId) { %>
+                        <%= subject.teacherId.firstName %> <%= subject.teacherId.lastName %>
+                    <% } else { %>
+                        Not Assigned
+                    <% } %>
+                </dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">
+                    <% if (subject.isActive) { %>
+                        <span class="badge bg-success">Active</span>
+                    <% } else { %>
+                        <span class="badge bg-secondary">Inactive</span>
+                    <% } %>
+                </dd>
+            </dl>
+        </div>
+    </div>
+</div> 

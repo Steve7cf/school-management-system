@@ -1,0 +1,186 @@
+<%- include('../../partials/messages') %>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Student Details</h2>
+                <div class="btn-group">
+                    <a href="/students" class="btn btn-outline-secondary">
+                        <img src="/class.png" alt="Back" style="width: 20px; height: 20px;" class="me-2">
+                        Back to List
+                    </a>
+                    <% if (user.role === 'admin' || user.role === 'teacher') { %>
+                        <a href="/students/edit/<%= student._id %>" class="btn btn-warning me-2">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Student Profile -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <img src="/avatar.png" alt="Student Avatar" class="rounded-circle mb-3" style="width: 120px; height: 120px;">
+                    <h3 class="card-title"><%= student.firstName %> <%= student.lastName %></h3>
+                    <p class="text-muted mb-4">
+                        <% if (student.class) { %>
+                            <%= student.class.name %> <%= student.class.section %>
+                        <% } else { %>
+                            Class Not Assigned
+                        <% } %>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Information -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Student Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">First Name</label>
+                            <p class="form-control-static"><%= student.firstName %></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Last Name</label>
+                            <p class="form-control-static"><%= student.lastName %></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Date of Birth</label>
+                            <p class="form-control-static"><%= student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'Not Set' %></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Gender</label>
+                            <p class="form-control-static"><%= student.gender || 'Not Set' %></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Address</label>
+                            <p class="form-control-static"><%= student.address || 'Not Set' %></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Information -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Academic Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Admission No.:</strong> <%= student.studentId %>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Class:</strong> <%= student.gradeLevel ? 'Form ' + student.gradeLevel : 'Not Assigned' %><%= student.section ? ' Section ' + student.section : '' %>
+                    </div>
+                    <div class="list-group list-group-flush subjects-scroll">
+                        <% if (student.subjects && student.subjects.length > 0) { %>
+                            <% student.subjects.forEach(subject => { %>
+                                <div class="list-group-item">
+                                    <h5 class="mb-1"><%= subject.name %></h5>
+                                    <small class="text-muted">Code: <%= subject.code %></small>
+                                </div>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-center py-4">
+                                <img src="/subject.png" alt="No Subjects" style="width: 48px; height: 48px; opacity: 0.5;">
+                                <p class="text-muted mt-2">No subjects assigned</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parent Information -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Parent/Guardian Information</h4>
+                </div>
+                <div class="card-body">
+                    <% if (parent) { %>
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="/parent.png" alt="Parent" class="rounded-circle me-3" style="width: 48px; height: 48px;">
+                            <div>
+                                <h5 class="mb-1"><%= parent.firstName %> <%= parent.lastName %></h5>
+                                <p class="text-muted mb-0"><%= parent.email %></p>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">Phone</label>
+                                <p class="form-control-static"><%= parent.phone || 'Not Set' %></p>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-4">
+                            <img src="/parent.png" alt="No Parent" style="width: 48px; height: 48px; opacity: 0.5;">
+                            <p class="text-muted mt-2">No parent/guardian assigned</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.form-control-static {
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.list-group-item {
+    border: none;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.list-group-item:last-child {
+    margin-bottom: 0;
+}
+
+.btn-group .btn {
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-group .btn img {
+    opacity: 0.7;
+}
+
+.btn-group .btn:hover img {
+    opacity: 1;
+}
+
+.subjects-scroll {
+    max-height: 260px;
+    overflow-y: auto;
+    margin-bottom: 0;
+}
+</style> 

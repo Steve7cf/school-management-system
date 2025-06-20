@@ -1,0 +1,51 @@
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create Announcement</h4>
+                </div>
+                <div class="card-body">
+                    <form action="/announcements/create" method="POST">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content</label>
+                            <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="targetAudience" class="form-label">Target Audience</label>
+                            <select class="form-select" id="targetAudience" name="targetAudience" multiple required>
+                                <option value="All">All</option>
+                                <option value="Students">Students</option>
+                                <option value="Teachers">Teachers</option>
+                                <option value="Parents">Parents</option>
+                            </select>
+                            <small class="form-text text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="gradeLevel" class="form-label">Grade Level (optional)</label>
+                            <input type="number" class="form-control" id="gradeLevel" name="gradeLevel" min="1" max="12">
+                        </div>
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="expiryDate" class="form-label">Expiry Date (optional)</label>
+                            <input type="date" class="form-control" id="expiryDate" name="expiryDate">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Create Announcement</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

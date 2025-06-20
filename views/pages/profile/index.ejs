@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .profile-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px 15px 0 0;
+            padding: 1.5rem;
+        }
+        
+        .profile-info {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .profile-info:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            color: #2c3e50;
+            font-size: 1.1rem;
+            margin-top: 0.25rem;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        
+        .role-student {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #2c3e50;
+        }
+        
+        .role-teacher {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #2c3e50;
+        }
+        
+        .role-admin {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            color: #2c3e50;
+        }
+        
+        .icon {
+            margin-right: 0.5rem;
+            color: #667eea;
+        }
+        
+        .profile-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card profile-card">
+                    <div class="card-header text-white text-center">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h4 class="mb-0">Profile Information</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row mb-3">
+                            <div class="col-4 info-label">
+                                <i class="fas fa-user icon"></i>Name:
+                            </div>
+                            <div class="col-8 info-value">
+                                <%= user.firstName %> <%= user.lastName %>
+                            </div>
+                        </div>
+                        
+                        <% if (user.studentId) { %>
+                            <div class="row mb-3">
+                                <div class="col-4 info-label">
+                                    <i class="fas fa-id-card icon"></i>Student ID:
+                                </div>
+                                <div class="col-8 info-value">
+                                    <%= user.studentId %>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4 info-label">
+                                    <i class="fas fa-graduation-cap icon"></i>Grade Level:
+                                </div>
+                                <div class="col-8 info-value">
+                                    <%= user.gradeLevel %>
+                                </div>
+                            </div>
+                        <% } %>
+                        
+                        <% if (user.teacherId) { %>
+                            <div class="row mb-3">
+                                <div class="col-4 info-label">
+                                    <i class="fas fa-chalkboard-teacher icon"></i>Teacher ID:
+                                </div>
+                                <div class="col-8 info-value">
+                                    <%= user.teacherId %>
+                                </div>
+                            </div>
+                        <% } %>
+                        
+                        <% if (user.email) { %>
+                            <div class="row mb-3">
+                                <div class="col-4 info-label">
+                                    <i class="fas fa-envelope icon"></i>Email:
+                                </div>
+                                <div class="col-8 info-value">
+                                    <%= user.email %>
+                                </div>
+                            </div>
+                        <% } %>
+                        
+                        <% if (user.parentEmail) { %>
+                            <div class="row mb-3">
+                                <div class="col-4 info-label">
+                                    <i class="fas fa-users icon"></i>Parent Email:
+                                </div>
+                                <div class="col-8 info-value">
+                                    <%= user.parentEmail %>
+                                </div>
+                            </div>
+                        <% } %>
+                        
+                        <div class="row mb-3">
+                            <div class="col-4 info-label">
+                                <i class="fas fa-user-tag icon"></i>Role:
+                            </div>
+                            <div class="col-8 info-value">
+                                <span class="role-badge role-<%= user.role.toLowerCase() %>">
+                                    <%= user.role %>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">New Message</h4>
+                </div>
+                <div class="card-body">
+                    <form action="/messages" method="POST">
+                        <div class="mb-3">
+                            <label for="receiver" class="form-label">Parent</label>
+                            <select class="form-select" id="receiver" name="receiver" required>
+                                <option value="">Select Parent</option>
+                                <% if (parents && parents.length > 0) { %>
+                                    <% parents.forEach(parent => { %>
+                                        <option value="<%= parent._id %>"><%= parent.firstName %> <%= parent.lastName %> (<%= parent.email %>)</option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

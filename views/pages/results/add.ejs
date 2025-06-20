@@ -1,0 +1,60 @@
+<form id="addResultForm" action="/results/add" method="POST">
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="classFilter" class="form-label">Form</label>
+            <select id="classFilter" class="form-select">
+                <option value="">All Forms</option>
+                <% if (classes && classes.length > 0) { %>
+                    <% Array.from(new Set(classes.map(c => c.gradeLevel))).forEach(form => { %>
+                        <option value="<%= form %>">Form <%= form %></option>
+                    <% }); %>
+                <% } %>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="sectionFilter" class="form-label">Section</label>
+            <select id="sectionFilter" class="form-select">
+                <option value="">All Sections</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+            </select>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label for="studentId" class="form-label">Student</label>
+        <select name="studentId" id="studentId" class="form-select" required>
+            <option value="">Select Student</option>
+            <% if (students && students.length > 0) { %>
+                <% students.forEach(student => { %>
+                    <option value="<%= student._id %>" data-form="<%= student.gradeLevel %>" data-section="<%= student.section %>">
+                        <%= student.firstName %> <%= student.lastName %> (<%= student.studentId %>) - Form <%= student.gradeLevel %> <%= student.section %>
+                    </option>
+                <% }) %>
+            <% } %>
+        </select>
+    </div>
+    <!-- Other form fields for exam, marks, etc. -->
+    <button type="submit" class="btn btn-primary">Add Result</button>
+</form>
+<script>
+    const classFilter = document.getElementById('classFilter');
+    const sectionFilter = document.getElementById('sectionFilter');
+    const studentSelect = document.getElementById('studentId');
+    function filterStudents() {
+        const form = classFilter.value;
+        const section = sectionFilter.value;
+        Array.from(studentSelect.options).forEach(option => {
+            if (!option.value) return; // skip placeholder
+            const matchesForm = !form || option.getAttribute('data-form') === form;
+            const matchesSection = !section || option.getAttribute('data-section') === section;
+            option.style.display = (matchesForm && matchesSection) ? '' : 'none';
+        });
+        // Optionally reset selection if filtered out
+        if (studentSelect.selectedIndex > 0 && studentSelect.options[studentSelect.selectedIndex].style.display === 'none') {
+            studentSelect.selectedIndex = 0;
+        }
+    }
+    classFilter.addEventListener('change', filterStudents);
+    sectionFilter.addEventListener('change', filterStudents);
+</script> 

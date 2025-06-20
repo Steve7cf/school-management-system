@@ -1,0 +1,95 @@
+<div class="container-fluid py-4">
+    <h1 class="h3 mb-4">Take Attendance</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header">
+            <h6 class="m-0 font-weight-bold text-primary">Select Class, Subject, and Date</h6>
+        </div>
+        <div class="card-body">
+            <form action="/attendance/fetch-students" method="GET">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <label for="class" class="form-label">Class</label>
+                        <select name="class" id="class" class="form-select" required>
+                            <option value="">Select a class</option>
+                            <% assignedClasses.forEach(c => { %>
+                                <option value="<%= c.gradeLevel %>-<%= c.section %>" <%= (selectedClass === `${c.gradeLevel}-${c.section}`) ? 'selected' : '' %>>
+                                    Form <%= c.gradeLevel %> - Section <%= c.section %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <select name="subject" id="subject" class="form-select" required>
+                            <option value="">Select a subject</option>
+                            <% subjects.forEach(s => { %>
+                                <option value="<%= s._id %>" <%= (selectedSubject == s._id) ? 'selected' : '' %>><%= s.name %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" name="date" id="date" class="form-control" value="<%= selectedDate || new Date().toISOString().split('T')[0] %>" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Fetch Students</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <% if (students && students.length > 0) { %>
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">Mark Attendance for <%= selectedDate %></h6>
+            </div>
+            <div class="card-body">
+                <form action="/attendance/submit" method="POST">
+                    <input type="hidden" name="class" value="<%= selectedClass %>">
+                    <input type="hidden" name="subjectId" value="<%= selectedSubject %>">
+                    <input type="hidden" name="date" value="<%= selectedDate %>">
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Student ID</th>
+                                    <th>Student Name</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% students.forEach((student, index) => { %>
+                                    <tr>
+                                        <td><%= student.studentId %></td>
+                                        <td><%= student.firstName %> <%= student.lastName %></td>
+                                        <td>
+                                            <input type="hidden" name="attendance[<%= index %>][studentId]" value="<%= student._id %>">
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check" name="attendance[<%= index %>][status]" id="present_<%= index %>" value="Present" checked>
+                                                <label class="btn btn-outline-success" for="present_<%= index %>">Present</label>
+
+                                                <input type="radio" class="btn-check" name="attendance[<%= index %>][status]" id="absent_<%= index %>" value="Absent">
+                                                <label class="btn btn-outline-danger" for="absent_<%= index %>">Absent</label>
+
+                                                <input type="radio" class="btn-check" name="attendance[<%= index %>][status]" id="late_<%= index %>" value="Late">
+                                                <label class="btn btn-outline-warning" for="late_<%= index %>">Late</label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn btn-success">Submit Attendance</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <% } else if (selectedClass) { %>
+        <div class="alert alert-warning">No students found for the selected class.</div>
+    <% } %>
+</div> 

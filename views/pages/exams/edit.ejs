@@ -1,0 +1,118 @@
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Edit Exam</h4>
+                </div>
+                <div class="card-body">
+                    <form action="/exams/edit/<%= exam._id %>" method="POST">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Exam Title</label>
+                            <input type="text" class="form-control" id="title" name="title" value="<%= exam.title %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Exam Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="<%= exam.name %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="date" name="date" value="<%= exam.date ? exam.date.toISOString().substring(0,10) : '' %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="teacherId" class="form-label">Teacher</label>
+                            <select class="form-select" id="teacherId" name="teacherId" required>
+                                <option value="">Select a teacher</option>
+                                <% if (teachers && teachers.length > 0) { %>
+                                    <% teachers.forEach(teacher => { %>
+                                        <option value="<%= teacher._id %>" <%= exam.teacherId && teacher._id.toString() === exam.teacherId.toString() ? 'selected' : '' %>><%= teacher.firstName %> <%= teacher.lastName %></option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subject" class="form-label">Subject</label>
+                            <select class="form-select" id="subject" name="subject" required>
+                                <% if (subjects && subjects.length > 0) { %>
+                                    <% subjects.forEach(subject => { %>
+                                        <option value="<%= subject._id %>" <%= exam.subject && subject._id.toString() === exam.subject._id.toString() ? 'selected' : '' %>><%= subject.name %></option>
+                                    <% }) %>
+                                <% } else { %>
+                                    <option value="">Select a teacher first</option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="gradeLevel" class="form-label">Grade Level</label>
+                            <input type="number" class="form-control" id="gradeLevel" name="gradeLevel" value="<%= exam.gradeLevel %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Exam Type</label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="Quiz" <%= exam.type === 'Quiz' ? 'selected' : '' %>>Quiz</option>
+                                <option value="Mid-Term" <%= exam.type === 'Mid-Term' ? 'selected' : '' %>>Mid-Term</option>
+                                <option value="Final" <%= exam.type === 'Final' ? 'selected' : '' %>>Final</option>
+                                <option value="Assignment" <%= exam.type === 'Assignment' ? 'selected' : '' %>>Assignment</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="totalMarks" class="form-label">Total Marks</label>
+                            <input type="number" class="form-control" id="totalMarks" name="totalMarks" value="<%= exam.totalMarks %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Duration (minutes)</label>
+                            <input type="number" class="form-control" id="duration" name="duration" value="<%= exam.duration %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="startTime" class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="startTime" name="startTime" value="<%= exam.startTime %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="term" class="form-label">Term</label>
+                            <select class="form-select" id="term" name="term" required>
+                                <option value="Term 1" <%= exam.term === 'Term 1' ? 'selected' : '' %>>Term 1</option>
+                                <option value="Term 2" <%= exam.term === 'Term 2' ? 'selected' : '' %>>Term 2</option>
+                                <option value="Term 3" <%= exam.term === 'Term 3' ? 'selected' : '' %>>Term 3</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Update Exam</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const teacherSelect = document.getElementById('teacherId');
+    const subjectSelect = document.getElementById('subject');
+
+    teacherSelect.addEventListener('change', function() {
+        const teacherId = this.value;
+        subjectSelect.innerHTML = '<option value="">Loading...</option>';
+        if (!teacherId) {
+            subjectSelect.innerHTML = '<option value="">Select a teacher first</option>';
+            return;
+        }
+        fetch(`/api/subjects/by-teacher/${teacherId}`)
+            .then(res => res.json())
+            .then(subjects => {
+                subjectSelect.innerHTML = '';
+                if (subjects.length === 0) {
+                    subjectSelect.innerHTML = '<option value="">No subjects found</option>';
+                } else {
+                    subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject._id;
+                        option.textContent = subject.name;
+                        if (subject._id === '<%= exam.subject ? exam.subject._id : "" %>') {
+                            option.selected = true;
+                        }
+                        subjectSelect.appendChild(option);
+                    });
+                }
+            });
+    });
+});
+</script> 

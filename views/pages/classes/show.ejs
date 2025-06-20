@@ -1,0 +1,48 @@
+<%- include('../../partials/messages') %>
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0"><%= classObj.name %> Details</h2>
+        <a href="/classes" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left me-2"></i> Back to Classes
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-8 mx-auto">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title mb-0">Class Information</h4>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <strong>Class Name:</strong> <%= classObj.name %>
+          </div>
+          <div class="mb-3">
+            <strong>Section:</strong> <%= classObj.section %>
+          </div>
+          <div class="mb-3">
+            <strong>Total Students:</strong> <%= students.length %>
+          </div>
+          <div class="mb-3">
+            <strong>Class Teacher:</strong> <%= classObj.teacherId && classObj.teacherId.firstName ? classObj.teacherId.firstName + ' ' + classObj.teacherId.lastName : 'Not Assigned' %>
+          </div>
+          <div class="mb-3">
+            <strong>Students:</strong>
+            <% if (students && students.length > 0) { %>
+              <ul>
+                <% students.forEach(function(student) { %>
+                  <li><%= student.firstName %> <%= student.lastName %></li>
+                <% }); %>
+              </ul>
+            <% } else { %>
+              <span class="text-muted">No students assigned</span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

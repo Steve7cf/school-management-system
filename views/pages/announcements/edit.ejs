@@ -1,0 +1,93 @@
+<%- include('../../partials/messages') %>
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Edit Announcement</h2>
+                <a href="/announcements" class="btn btn-outline-secondary">
+                    Back to Announcements
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form action="/announcements/<%= announcement._id %>?_method=PUT" method="POST">
+                        <!-- Title -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title *</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="<%= announcement.title %>" required>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content *</label>
+                            <textarea class="form-control" id="content" name="content" rows="5" required><%= announcement.content %></textarea>
+                        </div>
+
+                        <!-- Target Class -->
+                        <div class="mb-3">
+                            <label for="targetClass" class="form-label">Target Class</label>
+                            <select class="form-select" id="targetClass" name="targetClass">
+                                <option value="">School-wide Announcement</option>
+                                <% if (classes && classes.length > 0) { %>
+                                    <% classes.forEach(classItem => { %>
+                                        <option value="<%= classItem._id %>" 
+                                                <%= announcement.targetClass && announcement.targetClass.toString() === classItem._id.toString() ? 'selected' : '' %>>
+                                            <%= classItem.name %> <%= classItem.section %>
+                                        </option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                            <div class="form-text">Leave empty to make this a school-wide announcement</div>
+                        </div>
+
+                        <!-- Priority -->
+                        <div class="mb-3">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select class="form-select" id="priority" name="priority">
+                                <option value="normal" <%= announcement.priority === 'normal' ? 'selected' : '' %>>Normal</option>
+                                <option value="important" <%= announcement.priority === 'important' ? 'selected' : '' %>>Important</option>
+                                <option value="urgent" <%= announcement.priority === 'urgent' ? 'selected' : '' %>>Urgent</option>
+                            </select>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                Update Announcement
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.15);
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+</style> 

@@ -1,0 +1,99 @@
+<%- include('../../partials/messages') %>
+
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">System Logs</h2>
+        <a href="/dashboard/admin" class="btn btn-outline-secondary">
+          <img src="/class.png" alt="Back" style="width: 20px; height: 20px;" class="me-2">
+          Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <input type="text" id="logSearchInput" class="form-control" placeholder="Search logs...">
+    </div>
+    <div class="col-md-3">
+      <select id="eventTypeFilter" class="form-select">
+        <option value="">All Event Types</option>
+        <% if (logs && logs.length > 0) { %>
+          <% Array.from(new Set(logs.map(log => log.eventType))).forEach(type => { %>
+            <option value="<%= type %>"><%= type %></option>
+          <% }); %>
+        <% } %>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <input type="text" id="userFilter" class="form-control" placeholder="Filter by user...">
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title mb-0">Recent Events</h4>
+        </div>
+        <div class="card-body">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Event</th>
+                <th>User</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (logs && logs.length > 0) { %>
+                <% logs.forEach(function(log) { %>
+                  <tr>
+                    <td><%= new Date(log.createdAt).toLocaleString() %></td>
+                    <td><%= log.eventType %></td>
+                    <td><%= log.user %></td>
+                    <td>
+                      <pre style="white-space: pre-wrap; word-break: break-all; margin:0; font-size:0.95em;"><%= JSON.stringify(log.details, null, 2) %></pre>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } else { %>
+                <tr>
+                  <td colspan="4" class="text-center">No logs found.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const searchInput = document.getElementById('logSearchInput');
+  const eventTypeFilter = document.getElementById('eventTypeFilter');
+  const userFilter = document.getElementById('userFilter');
+  const rows = document.querySelectorAll('tbody tr');
+
+  function filterLogs() {
+    const search = searchInput.value.toLowerCase();
+    const eventType = eventTypeFilter.value;
+    const user = userFilter.value.toLowerCase();
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      const type = row.children[1].textContent;
+      const userCell = row.children[2].textContent.toLowerCase();
+      const matchesSearch = text.includes(search);
+      const matchesType = !eventType || type === eventType;
+      const matchesUser = !user || userCell.includes(user);
+      row.style.display = matchesSearch && matchesType && matchesUser ? '' : 'none';
+    });
+  }
+  if (searchInput) searchInput.addEventListener('input', filterLogs);
+  if (eventTypeFilter) eventTypeFilter.addEventListener('change', filterLogs);
+  if (userFilter) userFilter.addEventListener('input', filterLogs);
+</script> 
