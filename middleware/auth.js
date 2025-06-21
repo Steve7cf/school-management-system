@@ -7,14 +7,15 @@ const isAuthenticated = (req, res, next) => {
 };
 
 const isAdmin = (req, res, next) => {
-    if (req.session && req.session.user && req.session.user.role === 'admin') {
+    if (req.session.user && req.session.user.role === 'admin') {
         return next();
     }
-    res.status(403).render('error', { 
-        title: 'Access Denied',
-        message: 'You do not have permission to access this page.',
-        layout: false 
-    });
+    // If AJAX/fetch, return JSON
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+        return res.status(401).json({ success: false, message: 'Unauthorized: Admins only' });
+    }
+    // Otherwise, redirect
+    res.redirect('/login');
 };
 
 const isTeacher = (req, res, next) => {
@@ -73,6 +74,15 @@ const hasRole = (roles) => {
     };
 };
 
+function isTeacherOrAdmin(req, res, next) {
+    const user = req.session.user;
+    if (user && (user.role === 'teacher' || user.role === 'admin')) {
+        return next();
+    }
+    req.flash('info', ['You do not have permission to access this page.', 'danger']);
+    res.status(403).redirect('back');
+}
+
 module.exports = {
     isAuthenticated,
     isAdmin,
@@ -80,5 +90,6 @@ module.exports = {
     isStudent,
     isParent,
     isAdminOrTeacher,
-    hasRole
+    hasRole,
+    isTeacherOrAdmin
 }; 

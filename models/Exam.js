@@ -9,11 +9,11 @@ const examSchema = new mongoose.Schema({
     subject: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Subject',
-        required: true
+        required: false
     },
     gradeLevel: {
         type: Number,
-        required: true,
+        required: false,
         min: 1,
         max: 12
     },
@@ -23,21 +23,16 @@ const examSchema = new mongoose.Schema({
     },
     startTime: {
         type: String,
-        required: true
+        required: false
     },
     duration: {
         type: Number, // in minutes
-        required: true,
+        required: false,
         min: 30
-    },
-    totalMarks: {
-        type: Number,
-        required: true,
-        min: 0
     },
     type: {
         type: String,
-        enum: ['Quiz', 'Mid-Term', 'Final', 'Assignment'],
+        enum: ['Term', 'Mid-Term', 'Annual', 'Quiz', 'Assignment'],
         required: true
     },
     description: {
@@ -47,7 +42,7 @@ const examSchema = new mongoose.Schema({
     teacherId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Teacher',
-        required: true
+        required: false
     },
     status: {
         type: String,
@@ -57,8 +52,12 @@ const examSchema = new mongoose.Schema({
     section: {
         type: String,
         enum: ['A', 'B', 'C'],
-        required: true
-    }
+        required: false
+    },
+    targetClasses: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Class'
+    }]
 }, {
     timestamps: true
 });

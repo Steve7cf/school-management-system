@@ -1,9 +1,10 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
-const Class = require('./models/Class');
-const Teacher = require('./models/teacher');
+const Class = require('../models/Class');
+const Teacher = require('../models/teacher');
 
 async function seed() {
-  await mongoose.connect('mongodb://localhost:27017/school_management'); // Change if your DB URI is different
+  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management'); // Use .env
 
   // Find a teacher to assign to classes
   let teacher = await Teacher.findOne();

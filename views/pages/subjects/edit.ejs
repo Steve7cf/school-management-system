@@ -1,51 +1,235 @@
-<div class="container-fluid py-4">
-    <h1 class="h3 mb-4">Edit Subject</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Subject - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Top Navbar with toggler -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
+            </a>
+        </div>
+    </nav>
 
-    <div class="card shadow">
-        <div class="card-body">
-            <form action="/subjects/edit/<%= subject._id %>" method="POST">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="name" class="form-label">Subject Name</label>
-                        <input type="text" class="form-control" id="name" name="name" value="<%= subject.name %>" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="code" class="form-label">Subject Code</label>
-                        <input type="text" class="form-control" id="code" name="code" value="<%= subject.code %>" required>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="gradeLevel" class="form-label">Grade Level</label>
-                        <select class="form-select" id="gradeLevel" name="gradeLevel" required>
-                            <% for(let i = 1; i <= 12; i++) { %>
-                                <option value="<%= i %>" <%= (subject.gradeLevel == i) ? 'selected' : '' %>>Form <%= i %></option>
-                            <% } %>
-                        </select>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="credits" class="form-label">Credits</label>
-                        <input type="number" class="form-control" id="credits" name="credits" value="<%= subject.credits %>" min="1" required>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="teacherId" class="form-label">Teacher (Optional)</label>
-                        <select class="form-select" id="teacherId" name="teacherId">
-                            <option value="">None</option>
-                            <% teachers.forEach(teacher => { %>
-                                <option value="<%= teacher._id %>" <%= (subject.teacherId && subject.teacherId.equals(teacher._id)) ? 'selected' : '' %>>
-                                    <%= teacher.firstName %> <%= teacher.lastName %>
-                                </option>
-                            <% }); %>
-                        </select>
+    <!-- Offcanvas Sidebar -->
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <!-- Flash Messages -->
+        <% if (typeof info !== 'undefined' && info.length > 0) { %>
+            <div class="alert alert-<%= info[1] || 'info' %> alert-dismissible fade show" role="alert">
+                <%= info[0] %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Subject
+                    </h1>
+                    <div class="action-buttons d-flex gap-2">
+                        <a href="/subjects" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Subjects
+                        </a>
+                        <a href="/subjects/<%= subject._id %>" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
                     </div>
                 </div>
-                <div class="mt-3">
-                    <button type="submit" class="btn btn-primary">Update Subject</button>
-                    <a href="/subjects" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+
+        <!-- Edit Subject Form -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-book me-2"></i>Edit Subject Information
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form action="/subjects/edit/<%= subject._id %>" method="POST" class="needs-validation" novalidate>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="name" class="form-label">
+                                        <i class="fas fa-tag me-1"></i>Subject Name
+                                    </label>
+                                    <input type="text" class="form-control" id="name" name="name" value="<%= subject.name %>" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a subject name.
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="code" class="form-label">
+                                        <i class="fas fa-code me-1"></i>Subject Code
+                                    </label>
+                                    <input type="text" class="form-control" id="code" name="code" value="<%= subject.code %>" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a subject code.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="description" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>Description
+                                </label>
+                                <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter subject description..."><%= subject.description || '' %></textarea>
+                                <div class="form-text">Optional: Provide a brief description of the subject.</div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="gradeLevel" class="form-label">
+                                        <i class="fas fa-graduation-cap me-1"></i>Grade Level
+                                    </label>
+                                    <select class="form-select" id="gradeLevel" name="gradeLevel" required>
+                                        <option value="">Select Grade Level</option>
+                                        <% for(let i = 1; i <= 12; i++) { %>
+                                            <option value="<%= i %>" <%= (subject.gradeLevel == i) ? 'selected' : '' %>>Form <%= i %></option>
+                                        <% } %>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select a grade level.
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="credits" class="form-label">
+                                        <i class="fas fa-star me-1"></i>Credits
+                                    </label>
+                                    <input type="number" class="form-control" id="credits" name="credits" value="<%= subject.credits %>" min="1" max="10" required>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid number of credits (1-10).
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="teacherId" class="form-label">
+                                    <i class="fas fa-user-tie me-1"></i>Assigned Teacher
+                                </label>
+                                <select class="form-select" id="teacherId" name="teacherId">
+                                    <option value="">No Teacher Assigned</option>
+                                    <% teachers.forEach(teacher => { %>
+                                        <option value="<%= teacher._id %>" <%= (subject.teacherId && subject.teacherId.equals(teacher._id)) ? 'selected' : '' %>>
+                                            <%= teacher.firstName %> <%= teacher.lastName %> - <%= teacher.email %>
+                                        </option>
+                                    <% }); %>
+                                </select>
+                                <div class="form-text">Optional: Assign a teacher to this subject.</div>
+                            </div>
+                            
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-between pt-4 border-top">
+                                <a href="/subjects" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Subject
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </form>
+            </div>
+
+            <!-- Help Card -->
+            <div class="col-lg-4">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-question-circle me-2"></i>Form Help
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-info-circle me-1"></i>Subject Name
+                            </h6>
+                            <small class="text-muted">Enter the full name of the subject (e.g., "Mathematics", "English Literature")</small>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-info-circle me-1"></i>Subject Code
+                            </h6>
+                            <small class="text-muted">Enter a unique code for the subject (e.g., "MATH101", "ENG201")</small>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-info-circle me-1"></i>Grade Level
+                            </h6>
+                            <small class="text-muted">Select the appropriate grade level for this subject</small>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-info-circle me-1"></i>Credits
+                            </h6>
+                            <small class="text-muted">Number of credit hours this subject is worth (typically 1-5)</small>
+                        </div>
+                        <div>
+                            <h6 class="text-primary">
+                                <i class="fas fa-info-circle me-1"></i>Teacher Assignment
+                            </h6>
+                            <small class="text-muted">You can assign a teacher now or leave it unassigned for later assignment</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div> 
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Form Validation Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form validation
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+
+            // Add active class to current navigation link
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (currentPath.startsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

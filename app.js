@@ -10,13 +10,10 @@ const helmet = require("helmet");
 const logger = require("morgan");
 const cookie = require("cookie-parser");
 const MongoStore = require("connect-mongo");
-const expressLayouts = require('express-ejs-layouts');
 
 // View engine setup
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-app.set("layout", "layouts/main");
-app.use(expressLayouts);
 
 // Middleware
 app.use(

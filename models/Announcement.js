@@ -23,8 +23,12 @@ const announcementSchema = new mongoose.Schema({
     },
     targetAudience: [{
         type: String,
-        enum: ['All', 'Students', 'Teachers', 'Parents'],
+        enum: ['student', 'parent', 'teacher', 'all'],
         required: true
+    }],
+    targetClasses: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Class'
     }],
     gradeLevel: {
         type: Number,
@@ -64,7 +68,7 @@ announcementSchema.virtual('isExpired').get(function() {
 // Pre-save middleware to handle empty targetAudience
 announcementSchema.pre('save', function(next) {
     if (!this.targetAudience || this.targetAudience.length === 0) {
-        this.targetAudience = ['All'];
+        this.targetAudience = ['all'];
     }
     next();
 });

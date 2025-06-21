@@ -1,48 +1,240 @@
-<%- include('../../partials/messages') %>
-<div class="container-fluid py-4">
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <h2 class="mb-0"><%= classObj.name %> Details</h2>
-        <a href="/classes" class="btn btn-outline-secondary">
-          <i class="fas fa-arrow-left me-2"></i> Back to Classes
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-8 mx-auto">
-      <div class="card">
-        <div class="card-header">
-          <h4 class="card-title mb-0">Class Information</h4>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= classObj.name %> - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Top Navbar with toggler -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
+            </a>
         </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <strong>Class Name:</strong> <%= classObj.name %>
-          </div>
-          <div class="mb-3">
-            <strong>Section:</strong> <%= classObj.section %>
-          </div>
-          <div class="mb-3">
-            <strong>Total Students:</strong> <%= students.length %>
-          </div>
-          <div class="mb-3">
-            <strong>Class Teacher:</strong> <%= classObj.teacherId && classObj.teacherId.firstName ? classObj.teacherId.firstName + ' ' + classObj.teacherId.lastName : 'Not Assigned' %>
-          </div>
-          <div class="mb-3">
-            <strong>Students:</strong>
-            <% if (students && students.length > 0) { %>
-              <ul>
-                <% students.forEach(function(student) { %>
-                  <li><%= student.firstName %> <%= student.lastName %></li>
-                <% }); %>
-              </ul>
-            <% } else { %>
-              <span class="text-muted">No students assigned</span>
-            <% } %>
-          </div>
+    </nav>
+
+    <!-- Offcanvas Sidebar -->
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <!-- Flash Messages -->
+        <% if (typeof info !== 'undefined' && info.length > 0) { %>
+            <div class="alert alert-<%= info[1] || 'info' %> alert-dismissible fade show" role="alert">
+                <%= info[0] %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>Class Details
+                    </h1>
+                    <div class="action-buttons d-flex gap-2">
+                        <a href="/classes" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Classes
+                        </a>
+                        <% if (user.role === 'admin') { %>
+                            <a href="/classes/edit/<%= classObj._id %>" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Edit Class
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- Class Information -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-school me-2"></i><%= classObj.name %> - Section <%= classObj.section %>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row g-3">
+                            <dt class="col-sm-3 text-muted fw-bold">Class Name</dt>
+                            <dd class="col-sm-9 fs-5"><%= classObj.name %></dd>
+
+                            <dt class="col-sm-3 text-muted fw-bold">Section</dt>
+                            <dd class="col-sm-9 fs-5">
+                                <span class="badge bg-primary fs-6">Section <%= classObj.section %></span>
+                            </dd>
+
+                            <dt class="col-sm-3 text-muted fw-bold">Grade Level</dt>
+                            <dd class="col-sm-9 fs-5">
+                                <span class="badge bg-info fs-6">Form <%= classObj.gradeLevel %></span>
+                            </dd>
+
+                            <dt class="col-sm-3 text-muted fw-bold">Class Teacher</dt>
+                            <dd class="col-sm-9 fs-5">
+                                <% if (classObj.teacherId && classObj.teacherId.firstName) { %>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user-tie me-2 text-primary"></i>
+                                        <%= classObj.teacherId.firstName %> <%= classObj.teacherId.lastName %>
+                                    </div>
+                                <% } else { %>
+                                    <span class="text-muted">
+                                        <i class="fas fa-user-slash me-2"></i>
+                                        Not Assigned
+                                    </span>
+                                <% } %>
+                            </dd>
+
+                            <dt class="col-sm-3 text-muted fw-bold">Total Students</dt>
+                            <dd class="col-sm-9 fs-5">
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-users me-1"></i><%= students.length %> Students
+                                </span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="col-lg-4">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tools me-2"></i>Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/attendance/class/<%= classObj._id %>" class="btn btn-outline-primary">
+                                <i class="fas fa-clipboard-check me-2"></i>Take Attendance
+                            </a>
+                            <a href="/students?class=<%= classObj._id %>" class="btn btn-outline-info">
+                                <i class="fas fa-user-graduate me-2"></i>View Students
+                            </a>
+                            <% if (user.role === 'admin') { %>
+                                <a href="/classes/edit/<%= classObj._id %>" class="btn btn-outline-warning">
+                                    <i class="fas fa-edit me-2"></i>Edit Class
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students List -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-users me-2"></i>Enrolled Students (<%= students.length %>)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (students && students.length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Student ID</th>
+                                            <th>Name</th>
+                                            <th>Gender</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% students.forEach(function(student) { %>
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-secondary"><%= student.studentId %></span>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <img src="<%= student.avatar || '/images/student_avatar.png' %>" 
+                                                             alt="Student" 
+                                                             class="rounded-circle me-2" 
+                                                             style="width: 32px; height: 32px; object-fit: cover;">
+                                                        <%= student.firstName %> <%= student.lastName %>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <% if (student.gender) { %>
+                                                        <span class="badge bg-info"><%= student.gender %></span>
+                                                    <% } else { %>
+                                                        <span class="text-muted">Not Set</span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <a href="/students/<%= student._id %>" class="btn btn-sm btn-primary" title="View Student">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <% if (user.role === 'admin' || user.role === 'teacher') { %>
+                                                            <a href="/students/edit/<%= student._id %>" class="btn btn-sm btn-warning" title="Edit Student">
+                                                                <i class="fas fa-edit"></i>
+                                                            </a>
+                                                        <% } %>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-4">
+                                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Students Enrolled</h5>
+                                <p class="text-muted">This class currently has no students assigned.</p>
+                                <% if (user.role === 'admin') { %>
+                                    <a href="/students" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Add Students
+                                    </a>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div> 
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Navigation Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add active class to current navigation link
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (currentPath.startsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

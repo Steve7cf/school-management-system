@@ -92,6 +92,7 @@ const registerParent = async (req, res) => {
     phone,
     childStudentId,
   } = req.body;
+  
   if (
     !firstName ||
     !lastName ||
@@ -101,13 +102,40 @@ const registerParent = async (req, res) => {
     !phone ||
     !childStudentId
   ) {
-    return res.status(400).json({ message: "some fields are missing" });
+    req.flash("info", ["All fields are required", "warning"]);
+    return res.redirect("/signup");
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
+  if (password !== confirmPassword) {
+    req.flash("info", ["Passwords do not match", "warning"]);
+    return res.redirect("/signup");
+  }
 
   try {
+    // Check if student exists
+    const student = await studentModel.findOne({ studentId: childStudentId });
+    if (!student) {
+      req.flash("info", [`Student with ID ${childStudentId} not found. Please check the student ID.`, "warning"]);
+      return res.redirect("/signup");
+    }
+
+    // Check if parent already exists for this student
+    const existingParent = await parentModel.findOne({ studentId: childStudentId });
+    if (existingParent) {
+      req.flash("info", [`A parent account already exists for student ${childStudentId}.`, "warning"]);
+      return res.redirect("/signup");
+    }
+
+    // Check if email is already used
+    const existingEmail = await parentModel.findOne({ email: email });
+    if (existingEmail) {
+      req.flash("info", ["An account with this email already exists.", "warning"]);
+      return res.redirect("/signup");
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const parentObj = {
       firstName: firstName,
       lastName: lastName,
@@ -119,17 +147,32 @@ const registerParent = async (req, res) => {
 
     // create parent records
     const parentRecords = await parentModel.create(parentObj);
-    if (!parentRecords)
-      return res
-        .status(500)
-        .json({ message: "Whoops! cant create account right now" });
+    if (!parentRecords) {
+      req.flash("info", ["Failed to create parent account. Please try again.", "danger"]);
+      return res.redirect("/signup");
+    }
 
     await logEvent('signup', email, { role: 'parent', studentId: childStudentId });
 
-    res.status(201).redirect("/login");
+    req.flash("info", ["Parent account created successfully! You can now log in.", "success"]);
+    res.redirect("/login");
   } catch (error) {
     console.log(error.message);
-    return res.status(500).json({ message: "Whoops! internal server Errors" });
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      if (error.keyPattern && error.keyPattern.studentId) {
+        req.flash("info", [`A parent account already exists for student ${childStudentId}.`, "warning"]);
+      } else if (error.keyPattern && error.keyPattern.email) {
+        req.flash("info", ["An account with this email already exists.", "warning"]);
+      } else {
+        req.flash("info", ["Account already exists with these details.", "warning"]);
+      }
+    } else {
+      req.flash("info", ["An error occurred during registration. Please try again.", "danger"]);
+    }
+    
+    return res.redirect("/signup");
   }
 };
 
@@ -184,26 +227,26 @@ const registerTeacher = async (req, res) => {
 // auth teacher
 const authTeacher = async (req, res) => {
   const role = "teacher";
-  const { teacherId, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!teacherId || !password || !role) {
+  if (!email || !password || !role) {
     req.flash("info", ["some fields are missing", "warning"]);
     return res.redirect("/login");
   }
 
   try {
-    const user = await teacherModel.findOne({ teacherId: teacherId, role: role });
+    const user = await teacherModel.findOne({ email: email, role: role });
 
     if (!user) {
       req.flash("info", ["wrong credentials", "warning"]);
-      await logEvent('login_failed', teacherId, { reason: 'wrong credentials', role: 'teacher' });
+      await logEvent('login_failed', email, { reason: 'wrong credentials', role: 'teacher' });
       return res.redirect("/login");
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       req.flash("info", ["wrong credentials", "warning"]);
-      await logEvent('login_failed', teacherId, { reason: 'wrong credentials', role: 'teacher' });
+      await logEvent('login_failed', email, { reason: 'wrong credentials', role: 'teacher' });
       return res.redirect("/login");
     }
 
@@ -216,7 +259,7 @@ const authTeacher = async (req, res) => {
       role: role
     };
 
-    await logEvent('login', user.teacherId, { role: 'teacher' });
+    await logEvent('login', user.email, { role: 'teacher' });
 
     return res.redirect("/dashboard/teacher");
   } catch (error) {
@@ -276,23 +319,33 @@ const authParent = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    req.flash("info", ["some fields are missing", "warning"]);
+    req.flash("info", ["Email and password are required", "warning"]);
     return res.redirect("/login");
   }
 
   try {
+    // Check if parent exists
     const user = await parentModel.findOne({ email: email });
 
     if (!user) {
-      req.flash("info", ["wrong credentials", "warning"]);
-      await logEvent('login_failed', email, { reason: 'wrong credentials', role: 'parent' });
+      req.flash("info", ["No parent account found with this email address", "warning"]);
+      await logEvent('login_failed', email, { reason: 'account not found', role: 'parent' });
       return res.redirect("/login");
     }
 
+    // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      req.flash("info", ["wrong credentials", "warning"]);
-      await logEvent('login_failed', email, { reason: 'wrong credentials', role: 'parent' });
+      req.flash("info", ["Incorrect password. Please try again", "warning"]);
+      await logEvent('login_failed', email, { reason: 'wrong password', role: 'parent' });
+      return res.redirect("/login");
+    }
+
+    // Check if parent is linked to a valid student
+    const student = await studentModel.findOne({ studentId: user.studentId });
+    if (!student) {
+      req.flash("info", ["Parent account is not linked to a valid student. Please contact administrator.", "warning"]);
+      await logEvent('login_failed', email, { reason: 'no linked student', role: 'parent', studentId: user.studentId });
       return res.redirect("/login");
     }
 
@@ -306,12 +359,12 @@ const authParent = async (req, res) => {
       studentId: user.studentId
     };
 
-    await logEvent('login', email, { role: 'parent' });
+    await logEvent('login', email, { role: 'parent', studentId: user.studentId });
 
     return res.redirect("/dashboard/parent");
   } catch (error) {
-    console.log(error);
-    req.flash("info", ["Server error", "danger"]);
+    console.log("Parent login error:", error);
+    req.flash("info", ["Server error occurred. Please try again later.", "danger"]);
     return res.redirect("/login");
   }
 };

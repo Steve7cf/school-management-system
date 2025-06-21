@@ -1,4 +1,14 @@
-<!-- Login Section -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ms</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="shortcut icon" href="/images/favicon.png" type="image/x-icon" />
+  </head>
+  <body>
+
 <section class="d-flex align-items-center py-5 bg-light" style="min-height: 100vh">
   <div class="container">
     <div class="row justify-content-center">
@@ -83,8 +93,8 @@
               <div class="tab-pane fade" id="teacher-login" role="tabpanel">
                 <form id="teacherLoginForm" method="post" action="/login/teacher">
                   <div class="mb-3">
-                    <label for="teacherId" class="form-label">Teacher ID</label>
-                    <input type="text" class="form-control" id="teacherId" name="teacherId" required style="text-transform: uppercase;">
+                    <label for="teacherEmail" class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="teacherEmail" name="email" required>
                   </div>
                   <div class="mb-3">
                     <label for="teacherPassword" class="form-label">Password</label>
@@ -138,4 +148,6 @@
   </div>
 </section>
 
-<%- include('partials/footer.ejs'); %>
+<script src="/js/bootstrap.bundle.js"></script>
+</body>
+</html>

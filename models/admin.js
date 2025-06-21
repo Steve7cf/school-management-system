@@ -22,6 +22,10 @@ const adminSchema = new Schema({
   role: {
     type: String,
     default: 'admin'
+  },
+  avatar: {
+    type: String,
+    default: '/images/user.png'
   }
 }, { timestamps: true });
 

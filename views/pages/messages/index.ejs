@@ -1,57 +1,117 @@
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h3 mb-0">Messages</h2>
-        <% if (user.role === 'teacher') { %>
-            <a href="/messages/new" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>New Message
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Top Navbar with toggler -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
             </a>
-        <% } %>
-    </div>
-    <div class="card">
-        <div class="card-body">
-            <% if (messages && messages.length > 0) { %>
-                <ul class="list-group">
-                    <% messages.forEach(msg => { %>
-                        <li class="list-group-item">
-                            <strong>
-                                <% if (user.role === 'teacher') { %>
-                                    To: 
-                                    <% if (msg.receiver) { %>
-                                        <%= msg.receiver.firstName %> <%= msg.receiver.lastName %>
-                                    <% } else if (msg.receiver && msg.receiver._id) { %>
-                                        [Parent ID: <%= msg.receiver._id %>]
-                                    <% } else if (msg.receiver) { %>
-                                        [Parent: <%= msg.receiver %>]
-                                    <% } else { %>
-                                        [Deleted Parent]
-                                    <% } %>
-                                <% } else { %>
-                                    From: 
-                                    <% if (msg.sender) { %>
-                                        <%= msg.sender.firstName %> <%= msg.sender.lastName %>
-                                    <% } else if (msg.sender && msg.sender._id) { %>
-                                        [Teacher ID: <%= msg.sender._id %>]
-                                    <% } else if (msg.sender) { %>
-                                        [Teacher: <%= msg.sender %>]
-                                    <% } else { %>
-                                        [Deleted Teacher]
-                                    <% } %>
-                                <% } %>
-                            </strong>
-                            <br>
-                            <span><%= msg.message %></span>
-                            <br>
-                            <small class="text-muted"><%= msg.createdAt.toLocaleString() %></small>
-                            <% 
-                                let receiverId = msg.receiver && (msg.receiver._id ? msg.receiver._id.toString() : msg.receiver.toString());
-                                if (receiverId === user.id.toString()) { 
-                            %>
-                                <a href="/messages/reply/<%= msg._id %>" class="btn btn-sm btn-outline-primary float-end">Reply</a>
-                            <% } %>
-                        </li>
-                    <% }) %>
-                </ul>
-            <% } else { %>
-                <p class="text-center text-muted">No messages found.</p>
+        </div>
+    </nav>
+
+    <!-- Offcanvas Sidebar -->
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">Messages</h1>
+            <% if (user.role === 'teacher') { %>
+                <a href="/messages/new" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>New Message
+                </a>
             <% } %>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-body">
+                <% if (messages && messages.length > 0) { %>
+                    <ul class="list-group">
+                        <% messages.forEach(msg => { %>
+                            <li class="list-group-item">
+                                <strong>
+                                    <% if (user.role === 'teacher') { %>
+                                        To: 
+                                        <% if (msg.receiver) { %>
+                                            <%= msg.receiver.firstName %> <%= msg.receiver.lastName %>
+                                        <% } else if (msg.receiver && msg.receiver._id) { %>
+                                            [Parent ID: <%= msg.receiver._id %>]
+                                        <% } else if (msg.receiver) { %>
+                                            [Parent: <%= msg.receiver %>]
+                                        <% } else { %>
+                                            [Deleted Parent]
+                                        <% } %>
+                                    <% } else { %>
+                                        From: 
+                                        <% if (msg.sender) { %>
+                                            <%= msg.sender.firstName %> <%= msg.sender.lastName %>
+                                        <% } else if (msg.sender && msg.sender._id) { %>
+                                            [Teacher ID: <%= msg.sender._id %>]
+                                        <% } else if (msg.sender) { %>
+                                            [Teacher: <%= msg.sender %>]
+                                        <% } else { %>
+                                            [Deleted Teacher]
+                                        <% } %>
+                                    <% } %>
+                                </strong>
+                                <br>
+                                <span><%= msg.message %></span>
+                                <br>
+                                <small class="text-muted"><%= msg.createdAt.toLocaleString() %></small>
+                                <% 
+                                    let receiverId = msg.receiver && (msg.receiver._id ? msg.receiver._id.toString() : msg.receiver.toString());
+                                    if (receiverId === user.id.toString()) { 
+                                %>
+                                    <a href="/messages/reply/<%= msg._id %>" class="btn btn-sm btn-outline-primary float-end">Reply</a>
+                                <% } %>
+                            </li>
+                        <% }) %>
+                    </ul>
+                <% } else { %>
+                    <p class="text-center text-muted">No messages found.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Navigation Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add active class to current navigation link
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (currentPath.startsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
  

@@ -1,52 +1,231 @@
-<%- include('../../partials/messages') %>
-<div class="container-fluid py-4">
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">Edit <%= classObj.name %></h2>
-        <a href="/classes" class="btn btn-outline-secondary">
-          <i class="fas fa-arrow-left me-2"></i> Back to Classes
-        </a>
-      </div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-8 mx-auto">
-      <div class="card">
-        <div class="card-header">
-          <h4 class="card-title mb-0">Edit Class</h4>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Class - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Top Navbar with toggler -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
+            </a>
         </div>
-        <div class="card-body">
-          <form action="/classes/edit/<%= classObj._id %>" method="POST">
-            <div class="mb-3">
-              <label class="form-label">Form</label>
-              <select name="gradeLevel" class="form-select" required>
-                <% for (let i = 1; i <= 4; i++) { %>
-                  <option value="<%= i %>" <%= classObj.gradeLevel == i ? 'selected' : '' %>>Form <%= i %></option>
-                <% } %>
-              </select>
+    </nav>
+
+    <!-- Offcanvas Sidebar -->
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <!-- Flash Messages -->
+        <% if (typeof info !== 'undefined' && info.length > 0) { %>
+            <div class="alert alert-<%= info[1] || 'info' %> alert-dismissible fade show" role="alert">
+                <%= info[0] %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Section</label>
-              <select name="section" class="form-select" required>
-                <% ['A','B','C'].forEach(function(sec) { %>
-                  <option value="<%= sec %>" <%= classObj.section === sec ? 'selected' : '' %>><%= sec %></option>
-                <% }); %>
-              </select>
+        <% } %>
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Class
+                    </h1>
+                    <div class="action-buttons d-flex gap-2">
+                        <a href="/classes" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Classes
+                        </a>
+                        <a href="/classes/<%= classObj._id %>" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Class Teacher</label>
-              <select name="teacherId" class="form-select" required>
-                <option value="">Select Teacher</option>
-                <% teachers.forEach(function(teacher) { %>
-                  <option value="<%= teacher._id %>" <%= classObj.teacherId && classObj.teacherId.toString() === teacher._id.toString() ? 'selected' : '' %>><%= teacher.firstName %> <%= teacher.lastName %></option>
-                <% }); %>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Update Class</button>
-          </form>
         </div>
-      </div>
+
+        <!-- Edit Class Form -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">
+                            <i class="fas fa-school me-2"></i>Edit Class Information
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form action="/classes/edit/<%= classObj._id %>" method="POST" class="needs-validation" novalidate>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="gradeLevel" class="form-label">
+                                        <i class="fas fa-graduation-cap me-1"></i>Grade Level
+                                    </label>
+                                    <select name="gradeLevel" id="gradeLevel" class="form-select" required>
+                                        <option value="">Select Grade Level</option>
+                                        <% for (let i = 1; i <= 4; i++) { %>
+                                            <option value="<%= i %>" <%= classObj.gradeLevel == i ? 'selected' : '' %>>Form <%= i %></option>
+                                        <% } %>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select a grade level.
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="section" class="form-label">
+                                        <i class="fas fa-layer-group me-1"></i>Section
+                                    </label>
+                                    <select name="section" id="section" class="form-select" required>
+                                        <option value="">Select Section</option>
+                                        <% ['A','B','C'].forEach(function(sec) { %>
+                                            <option value="<%= sec %>" <%= classObj.section === sec ? 'selected' : '' %>><%= sec %></option>
+                                        <% }); %>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Please select a section.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="teacherId" class="form-label">
+                                    <i class="fas fa-user-tie me-1"></i>Class Teacher
+                                </label>
+                                <select name="teacherId" id="teacherId" class="form-select">
+                                    <option value="">Select Teacher</option>
+                                    <% teachers.forEach(function(teacher) { %>
+                                        <option value="<%= teacher._id %>" <%= classObj.teacherId && classObj.teacherId.toString() === teacher._id.toString() ? 'selected' : '' %>>
+                                            <%= teacher.firstName %> <%= teacher.lastName %> - <%= teacher.email %>
+                                        </option>
+                                    <% }); %>
+                                </select>
+                                <div class="form-text">Optional: Assign a teacher to this class.</div>
+                                <div class="invalid-feedback">
+                                    Please select a class teacher (optional).
+                                </div>
+                            </div>
+                            
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-between pt-4 border-top">
+                                <a href="/classes" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Class
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="col-lg-4">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-question-circle me-2"></i>Form Help
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-info-circle me-1"></i>Grade Level
+                            </h6>
+                            <small class="text-muted">Select the appropriate grade level (Form 1-4) for this class</small>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-primary">
+                                <i class="fas fa-info-circle me-1"></i>Section
+                            </h6>
+                            <small class="text-muted">Choose a section (A, B, or C) to organize students within the grade level</small>
+                        </div>
+                        <div>
+                            <h6 class="text-primary">
+                                <i class="fas fa-info-circle me-1"></i>Class Teacher
+                            </h6>
+                            <small class="text-muted">Assign a teacher who will be responsible for this class and its students</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Class Info -->
+                <div class="card shadow mt-3">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Current Class Info
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <small class="text-muted">Current Name:</small>
+                            <div class="fw-bold"><%= classObj.name %></div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Current Section:</small>
+                            <div class="fw-bold">Section <%= classObj.section %></div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Current Teacher:</small>
+                            <div class="fw-bold">
+                                <% if (classObj.teacherId && classObj.teacherId.firstName) { %>
+                                    <%= classObj.teacherId.firstName %> <%= classObj.teacherId.lastName %>
+                                <% } else { %>
+                                    <span class="text-muted">Not Assigned</span>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div> 
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Form Validation Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form validation
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+
+            // Add active class to current navigation link
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (currentPath.startsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

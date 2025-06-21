@@ -1,30 +1,13 @@
-// Add active class to current sidebar link
+// Add active class to current navigation link
 document.addEventListener('DOMContentLoaded', function() {
     const currentPath = window.location.pathname;
-    const sidebarLinks = document.querySelectorAll('.nav-link');
+    const navLinks = document.querySelectorAll('.nav-link');
     
-    sidebarLinks.forEach(link => {
+    navLinks.forEach(link => {
         if (currentPath.startsWith(link.getAttribute('href'))) {
             link.classList.add('active');
         }
     });
-
-    var sidebar = document.getElementById('sidebar');
-    var toggler = document.querySelector('.navbar-toggler[data-bs-target="#sidebar"]');
-    if (sidebar && toggler) {
-        toggler.addEventListener('click', function(e) {
-            e.preventDefault();
-            sidebar.classList.toggle('show');
-        });
-        // Hide sidebar when clicking outside on mobile
-        document.addEventListener('click', function(e) {
-            if (window.innerWidth <= 991 && sidebar.classList.contains('show')) {
-                if (!sidebar.contains(e.target) && !toggler.contains(e.target)) {
-                    sidebar.classList.remove('show');
-                }
-            }
-        });
-    }
 });
 
 // Initialize tooltips

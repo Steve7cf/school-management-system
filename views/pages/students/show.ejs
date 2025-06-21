@@ -1,186 +1,259 @@
-<%- include('../../partials/messages') %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Details - School Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
+            </a>
+        </div>
+    </nav>
 
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2 class="mb-0">Student Details</h2>
-                <div class="btn-group">
-                    <a href="/students" class="btn btn-outline-secondary">
-                        <img src="/class.png" alt="Back" style="width: 20px; height: 20px;" class="me-2">
-                        Back to List
-                    </a>
-                    <% if (user.role === 'admin' || user.role === 'teacher') { %>
-                        <a href="/students/edit/<%= student._id %>" class="btn btn-warning me-2">
-                            <i class="bi bi-pencil-square"></i> Edit
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <div class="container-fluid main-content">
+        <% if (typeof info !== 'undefined' && info.length > 0) { %>
+            <div class="alert alert-<%= info[1] || 'info' %> alert-dismissible fade show" role="alert">
+                <%= info[0] %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">Student Details</h1>
+                    <div class="action-buttons d-flex gap-2">
+                        <a href="/students" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Students
                         </a>
-                    <% } %>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Student Profile -->
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <img src="/avatar.png" alt="Student Avatar" class="rounded-circle mb-3" style="width: 120px; height: 120px;">
-                    <h3 class="card-title"><%= student.firstName %> <%= student.lastName %></h3>
-                    <p class="text-muted mb-4">
-                        <% if (student.class) { %>
-                            <%= student.class.name %> <%= student.class.section %>
-                        <% } else { %>
-                            Class Not Assigned
-                        <% } %>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Student Information -->
-        <div class="col-md-8 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Student Information</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label text-muted">First Name</label>
-                            <p class="form-control-static"><%= student.firstName %></p>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted">Last Name</label>
-                            <p class="form-control-static"><%= student.lastName %></p>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted">Date of Birth</label>
-                            <p class="form-control-static"><%= student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'Not Set' %></p>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted">Gender</label>
-                            <p class="form-control-static"><%= student.gender || 'Not Set' %></p>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label text-muted">Address</label>
-                            <p class="form-control-static"><%= student.address || 'Not Set' %></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Academic Information -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Academic Information</h4>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <strong>Admission No.:</strong> <%= student.studentId %>
-                    </div>
-                    <div class="mb-3">
-                        <strong>Class:</strong> <%= student.gradeLevel ? 'Form ' + student.gradeLevel : 'Not Assigned' %><%= student.section ? ' Section ' + student.section : '' %>
-                    </div>
-                    <div class="list-group list-group-flush subjects-scroll">
-                        <% if (student.subjects && student.subjects.length > 0) { %>
-                            <% student.subjects.forEach(subject => { %>
-                                <div class="list-group-item">
-                                    <h5 class="mb-1"><%= subject.name %></h5>
-                                    <small class="text-muted">Code: <%= subject.code %></small>
-                                </div>
-                            <% }); %>
-                        <% } else { %>
-                            <div class="text-center py-4">
-                                <img src="/subject.png" alt="No Subjects" style="width: 48px; height: 48px; opacity: 0.5;">
-                                <p class="text-muted mt-2">No subjects assigned</p>
-                            </div>
+                        <% if (user.role === 'admin' || user.role === 'teacher') { %>
+                            <a href="/students/edit/<%= student._id %>" class="btn btn-warning">
+                                <i class="fas fa-edit"></i> Edit Student
+                            </a>
                         <% } %>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Parent Information -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Parent/Guardian Information</h4>
-                </div>
-                <div class="card-body">
-                    <% if (parent) { %>
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="/parent.png" alt="Parent" class="rounded-circle me-3" style="width: 48px; height: 48px;">
-                            <div>
-                                <h5 class="mb-1"><%= parent.firstName %> <%= parent.lastName %></h5>
-                                <p class="text-muted mb-0"><%= parent.email %></p>
-                            </div>
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="card shadow">
+                    <div class="card-body text-center">
+                        <img src="<%= student.avatar || '/images/student_avatar.png' %>" 
+                             alt="Student Avatar" 
+                             class="rounded-circle mb-3" 
+                             style="width: 120px; height: 120px; object-fit: cover;">
+                        <h3 class="card-title text-primary"><%= student.firstName %> <%= student.lastName %></h3>
+                        <p class="text-muted mb-3">
+                            <i class="fas fa-id-card me-2"></i>
+                            <%= student.studentId %>
+                        </p>
+                        <div class="badge bg-primary fs-6 mb-3">
+                            <% if (student.gradeLevel && student.section) { %>
+                                Grade <%= student.gradeLevel %> - Section <%= student.section %>
+                            <% } else if (student.gradeLevel) { %>
+                                Grade <%= student.gradeLevel %>
+                            <% } else { %>
+                                Class Not Assigned
+                            <% } %>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8 mb-4">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-user me-2"></i>Personal Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label text-muted">Phone</label>
-                                <p class="form-control-static"><%= parent.phone || 'Not Set' %></p>
+                                <label class="form-label text-muted fw-bold">First Name</label>
+                                <p class="form-control-static fs-5"><%= student.firstName %></p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted fw-bold">Last Name</label>
+                                <p class="form-control-static fs-5"><%= student.lastName %></p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted fw-bold">Date of Birth</label>
+                                <p class="form-control-static fs-5">
+                                    <%= student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString() : 'Not Set' %>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted fw-bold">Gender</label>
+                                <p class="form-control-static fs-5">
+                                    <% if (student.gender) { %>
+                                        <span class="badge bg-info"><%= student.gender %></span>
+                                    <% } else { %>
+                                        Not Set
+                                    <% } %>
+                                </p>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-muted fw-bold">Address</label>
+                                <p class="form-control-static fs-5">
+                                    <%= student.address || 'Not Set' %>
+                                </p>
                             </div>
                         </div>
-                    <% } else { %>
-                        <div class="text-center py-4">
-                            <img src="/parent.png" alt="No Parent" style="width: 48px; height: 48px; opacity: 0.5;">
-                            <p class="text-muted mt-2">No parent/guardian assigned</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong class="text-muted">Student ID:</strong>
+                                <span class="badge bg-secondary fs-6"><%= student.studentId %></span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-muted">Class:</strong>
+                                <span class="badge bg-primary fs-6">
+                                    <% if (student.gradeLevel && student.section) { %>
+                                        Grade <%= student.gradeLevel %> - Section <%= student.section %>
+                                    <% } else if (student.gradeLevel) { %>
+                                        Grade <%= student.gradeLevel %>
+                                    <% } else { %>
+                                        Not Assigned
+                                    <% } %>
+                                </span>
+                            </div>
                         </div>
-                    <% } %>
+                        
+                        <h6 class="text-primary mb-3">Enrolled Subjects</h6>
+                        <div class="subjects-list">
+                            <% if (student.subjects && student.subjects.length > 0) { %>
+                                <% student.subjects.forEach(subject => { %>
+                                    <div class="subject-item p-3 mb-2 bg-light rounded">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1 fw-bold"><%= subject.name %></h6>
+                                                <small class="text-muted">Code: <%= subject.code %></small>
+                                            </div>
+                                            <span class="badge bg-success">Active</span>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="text-center py-4">
+                                    <i class="fas fa-book fa-2x text-muted mb-3"></i>
+                                    <p class="text-muted">No subjects assigned</p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-users me-2"></i>Parent/Guardian Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <% if (parent) { %>
+                            <div class="d-flex align-items-center mb-4">
+                                <img src="<%= parent.avatar || '/images/parent_avatar.png' %>" 
+                                     alt="Parent" 
+                                     class="rounded-circle me-3" 
+                                     style="width: 60px; height: 60px; object-fit: cover;">
+                                <div>
+                                    <h5 class="mb-1 text-primary"><%= parent.firstName %> <%= parent.lastName %></h5>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-envelope me-1"></i><%= parent.email %>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label text-muted fw-bold">Phone Number</label>
+                                    <p class="form-control-static fs-5">
+                                        <% if (parent.phone) { %>
+                                            <i class="fas fa-phone me-2"></i><%= parent.phone %>
+                                        <% } else { %>
+                                            Not Set
+                                        <% } %>
+                                    </p>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-4">
+                                <i class="fas fa-user-friends fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">No parent/guardian assigned</p>
+                            </div>
+                        <% } %>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<style>
-.card {
-    border: none;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    border-radius: 10px;
-}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (currentPath.startsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
 
-.card-header {
-    background-color: transparent;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-}
-
-.form-control-static {
-    font-weight: 500;
-    margin-bottom: 0;
-}
-
-.list-group-item {
-    border: none;
-    padding: 1rem;
-    margin-bottom: 0.5rem;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-}
-
-.list-group-item:last-child {
-    margin-bottom: 0;
-}
-
-.btn-group .btn {
-    display: inline-flex;
-    align-items: center;
-}
-
-.btn-group .btn img {
-    opacity: 0.7;
-}
-
-.btn-group .btn:hover img {
-    opacity: 1;
-}
-
-.subjects-scroll {
-    max-height: 260px;
-    overflow-y: auto;
-    margin-bottom: 0;
-}
-</style> 
+    <style>
+        .form-control-static {
+            font-weight: 500;
+            margin-bottom: 0;
+            color: #2c3e50;
+        }
+        
+        .subjects-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .subject-item {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .subject-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</body>
+</html> 

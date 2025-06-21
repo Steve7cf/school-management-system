@@ -1,11 +1,14 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
-const Exam = require('./models/Exam');
-const Subject = require('./models/Subject');
-const Teacher = require('./models/teacher');
+const Exam = require('../models/Exam');
+const Subject = require('../models/Subject');
+const Teacher = require('../models/teacher');
+
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management';
 
 async function seed() {
   try {
-    await mongoose.connect('mongodb://localhost:27017/school_management');
+    await mongoose.connect(MONGO_URI);
     console.log('Connected to MongoDB');
 
     const forms = [1, 2, 3, 4];
@@ -28,7 +31,7 @@ async function seed() {
       new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30), // 1 month from now
     ];
 
-    const examTypes = ['Quiz', 'Mid-Term', 'Final', 'Assignment'];
+    const examTypes = ['Quiz', 'Mid-Term', 'Term', 'Annual', 'Assignment'];
     const startTimes = ['08:00', '10:00', '14:00', '16:00'];
 
     let count = 1;

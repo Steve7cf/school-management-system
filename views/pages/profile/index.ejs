@@ -3,181 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>My Profile - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
         }
-        
-        .profile-card {
+        .main-container {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .profile-card, .content-card {
+            border-radius: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
         }
-        
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px 15px 0 0;
-            padding: 1.5rem;
+        .avatar-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            position: relative;
         }
-        
-        .profile-info {
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .profile-info:last-child {
-            border-bottom: none;
-        }
-        
-        .info-label {
-            color: #6c757d;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .info-value {
-            color: #2c3e50;
-            font-size: 1.1rem;
-            margin-top: 0.25rem;
-        }
-        
-        .role-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-        
-        .role-student {
-            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-            color: #2c3e50;
-        }
-        
-        .role-teacher {
-            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            color: #2c3e50;
-        }
-        
-        .role-admin {
-            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-            color: #2c3e50;
-        }
-        
-        .icon {
-            margin-right: 0.5rem;
-            color: #667eea;
-        }
-        
-        .profile-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        
         .profile-avatar {
-            width: 80px;
-            height: 80px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .avatar-upload-form {
+            position: relative;
+        }
+        .avatar-upload-form .btn {
+            position: absolute;
+            bottom: -10px;
+            right: 25px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
-            color: white;
-            font-size: 2rem;
+        }
+        .progress-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: opacity 0.3s;
+        }
+        .progress-overlay .spinner-border {
+            width: 3rem;
+            height: 3rem;
         }
     </style>
 </head>
-<body>
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card profile-card">
-                    <div class="card-header text-white text-center">
-                        <div class="profile-avatar">
-                            <i class="fas fa-user"></i>
+<body class="bg-light m-0 p-0">
+    <% if (typeof user !== 'undefined' && user) { %>
+        <!-- Offcanvas sidebar -->
+        <%- include('../../partials/offcanvas-sidebar') %>
+
+        <!-- Navbar for authenticated users -->
+        <%- include('../../partials/navbar') %>
+    <% } %>
+
+    <div class="container main-container">
+        <!-- Messages will be displayed here -->
+        <div class="row">
+            <!-- Left Column: Profile Card -->
+            <div class="col-lg-4">
+                <div class="card profile-card text-center p-4">
+                    <div class="avatar-container mb-3">
+                        <img src="<%= user.avatar %>" alt="Avatar" class="profile-avatar" id="avatarImage">
+                        <div class="progress-overlay d-none" id="progressOverlay">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
                         </div>
-                        <h4 class="mb-0">Profile Information</h4>
+                    </div>
+                    
+                    <h4 class="mb-0"><%= user.firstName %> <%= user.lastName %></h4>
+                    <span class="text-muted text-capitalize"><%= user.role %></span>
+
+                    <% if (['teacher', 'admin', 'parent'].includes(user.role)) { %>
+                        <form id="avatarForm" class="avatar-upload-form mt-3">
+                            <label for="avatarInput" class="btn btn-sm btn-light bg-white btn-outline-primary">
+                                <i class="fas fa-camera"></i>
+                            </label>
+                            <input type="file" id="avatarInput" name="avatar" class="d-none">
+                        </form>
+                    <% } %>
+
+                    <div class="d-grid mt-4">
+                         <a href="/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Settings -->
+            <div class="col-lg-8">
+                <div class="card content-card">
+                    <div class="card-header bg-white">
+                        <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">Personal Information</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab">Change Password</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-danger" id="delete-tab" data-bs-toggle="tab" data-bs-target="#delete" type="button" role="tab">Delete Account</button>
+                            </li>
+                        </ul>
                     </div>
                     <div class="card-body p-4">
-                        <div class="row mb-3">
-                            <div class="col-4 info-label">
-                                <i class="fas fa-user icon"></i>Name:
+                        <div class="tab-content" id="profileTabsContent">
+                            <!-- Personal Info Tab -->
+                            <div class="tab-pane fade show active" id="info" role="tabpanel">
+                                <h5 class="card-title mb-4">Edit Information</h5>
+                                <form action="/profile/update" method="POST">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">First Name</label>
+                                            <input type="text" class="form-control" name="firstName" value="<%= user.firstName %>">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Last Name</label>
+                                            <input type="text" class="form-control" name="lastName" value="<%= user.lastName %>">
+                                        </div>
+                                    </div>
+                                    <% if(user.email) { %>
+                                    <div class="mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="email" value="<%= user.email %>" <%- user.role !== 'parent' ? 'readonly' : '' %>>
+                                    </div>
+                                    <% } %>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                </form>
                             </div>
-                            <div class="col-8 info-value">
-                                <%= user.firstName %> <%= user.lastName %>
+
+                            <!-- Change Password Tab -->
+                            <div class="tab-pane fade" id="password" role="tabpanel">
+                                <h5 class="card-title mb-4">Change Your Password</h5>
+                                <form action="/profile/change-password" method="POST">
+                                    <div class="mb-3">
+                                        <label class="form-label">Current Password</label>
+                                        <input type="password" class="form-control" name="currentPassword" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">New Password</label>
+                                        <input type="password" class="form-control" name="newPassword" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Confirm New Password</label>
+                                        <input type="password" class="form-control" name="confirmPassword" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Update Password</button>
+                                </form>
                             </div>
-                        </div>
-                        
-                        <% if (user.studentId) { %>
-                            <div class="row mb-3">
-                                <div class="col-4 info-label">
-                                    <i class="fas fa-id-card icon"></i>Student ID:
-                                </div>
-                                <div class="col-8 info-value">
-                                    <%= user.studentId %>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-4 info-label">
-                                    <i class="fas fa-graduation-cap icon"></i>Grade Level:
-                                </div>
-                                <div class="col-8 info-value">
-                                    <%= user.gradeLevel %>
-                                </div>
-                            </div>
-                        <% } %>
-                        
-                        <% if (user.teacherId) { %>
-                            <div class="row mb-3">
-                                <div class="col-4 info-label">
-                                    <i class="fas fa-chalkboard-teacher icon"></i>Teacher ID:
-                                </div>
-                                <div class="col-8 info-value">
-                                    <%= user.teacherId %>
-                                </div>
-                            </div>
-                        <% } %>
-                        
-                        <% if (user.email) { %>
-                            <div class="row mb-3">
-                                <div class="col-4 info-label">
-                                    <i class="fas fa-envelope icon"></i>Email:
-                                </div>
-                                <div class="col-8 info-value">
-                                    <%= user.email %>
-                                </div>
-                            </div>
-                        <% } %>
-                        
-                        <% if (user.parentEmail) { %>
-                            <div class="row mb-3">
-                                <div class="col-4 info-label">
-                                    <i class="fas fa-users icon"></i>Parent Email:
-                                </div>
-                                <div class="col-8 info-value">
-                                    <%= user.parentEmail %>
-                                </div>
-                            </div>
-                        <% } %>
-                        
-                        <div class="row mb-3">
-                            <div class="col-4 info-label">
-                                <i class="fas fa-user-tag icon"></i>Role:
-                            </div>
-                            <div class="col-8 info-value">
-                                <span class="role-badge role-<%= user.role.toLowerCase() %>">
-                                    <%= user.role %>
-                                </span>
+
+                            <!-- Delete Account Tab -->
+                            <div class="tab-pane fade" id="delete" role="tabpanel">
+                                <h5 class="card-title mb-3">Delete Account</h5>
+                                <p class="text-muted">This action is irreversible. All your data will be permanently deleted. Please type your password to confirm.</p>
+                                <form action="/profile/delete" method="POST">
+                                    <div class="mb-3">
+                                        <label class="form-label">Confirm Password</label>
+                                        <input type="password" class="form-control" name="password" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger">Delete My Account</button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -185,7 +198,58 @@
             </div>
         </div>
     </div>
+    
+    <!-- Bootstrap 5.3.2 Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (if needed) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="/js/main.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const avatarInput = document.getElementById('avatarInput');
+            if (avatarInput) {
+                avatarInput.addEventListener('change', function(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const formData = new FormData();
+                    formData.append('avatar', file);
+
+                    const xhr = new XMLHttpRequest();
+                    const progressOverlay = document.getElementById('progressOverlay');
+                    const avatarImage = document.getElementById('avatarImage');
+
+                    progressOverlay.classList.remove('d-none');
+
+                    xhr.open('POST', '/profile/avatar', true);
+
+                    xhr.onload = function() {
+                        progressOverlay.classList.add('d-none');
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                avatarImage.src = response.newAvatarPath + '?t=' + new Date().getTime(); // bust cache
+                            } else {
+                                alert('Upload failed: ' + response.message);
+                            }
+                        } else {
+                            alert('Error uploading file: ' + xhr.statusText);
+                        }
+                    };
+
+                    xhr.onerror = function() {
+                        progressOverlay.classList.add('d-none');
+                        alert('An error occurred during the upload.');
+                    };
+
+                    xhr.send(formData);
+                });
+            }
+        });
+    </script>
 </body>
 </html>

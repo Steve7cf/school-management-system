@@ -1,51 +1,94 @@
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Create Announcement</h4>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Announcement - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light m-0 p-0">
+    <% if (typeof user !== 'undefined' && user) { %>
+        <!-- Offcanvas sidebar -->
+        <%- include('../../partials/offcanvas-sidebar') %>
+
+        <!-- Navbar for authenticated users -->
+        <%- include('../../partials/navbar') %>
+    <% } %>
+
+    <div class="container-fluid">
+        <div class="row">
+            <main class="col-12 p-4 main-content">
+                <div class="container py-4">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8 col-lg-7">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-primary text-white">
+                                    <h4 class="mb-0">Create Announcement</h4>
+                                </div>
+                                <div class="card-body">
+                                    <form action="/announcements/create" method="POST">
+                                        <div class="mb-3">
+                                            <label for="title" class="form-label">Title</label>
+                                            <input type="text" class="form-control" id="title" name="title" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="content" class="form-label">Content</label>
+                                            <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="targetAudience" class="form-label">Target Audience</label>
+                                            <select class="form-select" id="targetAudience" name="targetAudience" multiple required>
+                                                <option value="all">All</option>
+                                                <option value="student">Students</option>
+                                                <option value="teacher">Teachers</option>
+                                                <option value="parent">Parents</option>
+                                            </select>
+                                            <small class="form-text text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="gradeLevel" class="form-label">Grade Level (optional)</label>
+                                            <input type="number" class="form-control" id="gradeLevel" name="gradeLevel" min="1" max="12">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="priority" class="form-label">Priority</label>
+                                            <select class="form-select" id="priority" name="priority">
+                                                <option value="Low">Low</option>
+                                                <option value="Medium" selected>Medium</option>
+                                                <option value="High">High</option>
+                                                <option value="Urgent">Urgent</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="expiryDate" class="form-label">Expiry Date (optional)</label>
+                                            <input type="date" class="form-control" id="expiryDate" name="expiryDate">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">Create Announcement</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form action="/announcements/create" method="POST">
-                        <div class="mb-3">
-                            <label for="title" class="form-label">Title</label>
-                            <input type="text" class="form-control" id="title" name="title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="content" class="form-label">Content</label>
-                            <textarea class="form-control" id="content" name="content" rows="4" required></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="targetAudience" class="form-label">Target Audience</label>
-                            <select class="form-select" id="targetAudience" name="targetAudience" multiple required>
-                                <option value="All">All</option>
-                                <option value="Students">Students</option>
-                                <option value="Teachers">Teachers</option>
-                                <option value="Parents">Parents</option>
-                            </select>
-                            <small class="form-text text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
-                        </div>
-                        <div class="mb-3">
-                            <label for="gradeLevel" class="form-label">Grade Level (optional)</label>
-                            <input type="number" class="form-control" id="gradeLevel" name="gradeLevel" min="1" max="12">
-                        </div>
-                        <div class="mb-3">
-                            <label for="priority" class="form-label">Priority</label>
-                            <select class="form-select" id="priority" name="priority">
-                                <option value="Low">Low</option>
-                                <option value="Medium" selected>Medium</option>
-                                <option value="High">High</option>
-                                <option value="Urgent">Urgent</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="expiryDate" class="form-label">Expiry Date (optional)</label>
-                            <input type="date" class="form-control" id="expiryDate" name="expiryDate">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Create Announcement</button>
-                    </form>
-                </div>
-            </div>
+            </main>
         </div>
     </div>
-</div> 
+
+    <!-- Bootstrap 5.3.2 Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (if needed) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="/js/main.js"></script>
+</body>
+</html> 

@@ -25,13 +25,17 @@ const parentSchema =  new mongoose.Schema({
   email: {
     type: String,
     required: [true, "email is required"],
-    unique: false,
+    unique: true,
   },
   password: {
     type: String,
     required: [true, "password is required"],
     unique: false,
     minlength: [6, "weak password detected!"],
+  },
+  avatar: {
+    type: String,
+    default: '/images/parent_avatar.png'
   },
   role: {
     type: String,

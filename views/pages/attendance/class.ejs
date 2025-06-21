@@ -1,58 +1,114 @@
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3"><%= title %></h1>
-            <p class="text-muted">A complete attendance record for this class.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Attendance - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Top Navbar with toggler -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
+            </a>
         </div>
-        <a href="/classes" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-2"></i>
-            Back to Classes
-        </a>
-    </div>
+    </nav>
 
-    <div class="card shadow">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Date</th>
-                            <th>Student</th>
-                            <th>Subject</th>
-                            <th>Status</th>
-                            <th>Recorded By</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (attendance && attendance.length > 0) { %>
-                            <% attendance.forEach(record => { %>
-                                <tr>
-                                    <td><%= new Date(record.date).toLocaleDateString() %></td>
-                                    <td>
-                                        <% if (record.studentId) { %>
-                                            <%= record.studentId.firstName %> <%= record.studentId.lastName %>
-                                            (<%= record.studentId.studentId %>)
-                                        <% } else { %>
-                                            <span class="text-muted">Student not found</span>
-                                        <% } %>
-                                    </td>
-                                    <td><%= record.subjectId ? record.subjectId.name : 'N/A' %></td>
-                                    <td>
-                                        <span class="badge bg-<%= record.status === 'Present' ? 'success' : (record.status === 'Absent' ? 'danger' : 'warning') %>">
-                                            <%= record.status %>
-                                        </span>
-                                    </td>
-                                    <td><%= record.teacherId ? `${record.teacherId.firstName} ${record.teacherId.lastName}` : 'N/A' %></td>
-                                </tr>
-                            <% }); %>
-                        <% } else { %>
+    <!-- Offcanvas Sidebar -->
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3"><%= title %></h1>
+                <p class="text-muted">A complete attendance record for this class.</p>
+            </div>
+            <a href="/classes" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Back to Classes
+            </a>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
                             <tr>
-                                <td colspan="5" class="text-center">No attendance records found for this class.</td>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Subject</th>
+                                <th>Status</th>
+                                <th>Recorded By</th>
                             </tr>
-                        <% } %>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <% if (attendance && attendance.length > 0) { %>
+                                <% attendance.forEach(record => { %>
+                                    <tr>
+                                        <td><%= new Date(record.date).toLocaleDateString() %></td>
+                                        <td>
+                                            <% if (record.studentId) { %>
+                                                <%= record.studentId.firstName %> <%= record.studentId.lastName %>
+                                                (<%= record.studentId.studentId %>)
+                                            <% } else { %>
+                                                <span class="text-muted">Student not found</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= record.subjectId ? record.subjectId.name : 'N/A' %></td>
+                                        <td>
+                                            <span class="badge bg-<%= record.status === 'Present' ? 'success' : (record.status === 'Absent' ? 'danger' : 'warning') %>">
+                                                <%= record.status %>
+                                            </span>
+                                        </td>
+                                        <td><%= record.teacherId ? `${record.teacherId.firstName} ${record.teacherId.lastName}` : 'N/A' %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center">No attendance records found for this class.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div> 
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Navigation Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add active class to current navigation link
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (currentPath.startsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -3,23 +3,24 @@
     border: none;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
     border-radius: 10px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
     background-color: #fff;
 }
 
 .card-header {
     background-color: transparent;
     border-bottom: 1px solid rgba(0,0,0,0.1);
-    padding: 1.25rem;
+    padding: 1.5rem;
 }
 
 .card-body {
-    padding: 1.25rem;
+    padding: 1.5rem;
 }
 
 .card-title {
-    color: #2c3e50;
-    margin-bottom: 0.75rem;
+    color: #333333;
+    margin-bottom: 1rem;
+    font-weight: 600;
 }
 
 /* Dashboard Icons */
@@ -35,34 +36,36 @@
 /* Stats Cards */
 .stats-card {
     text-align: center;
-    padding: 1.5rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .stats-card .card-title {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333333;
+    margin-bottom: 0.75rem;
 }
 
 .stats-card .text-muted {
-    font-size: 0.875rem;
+    font-size: 1rem;
     color: #6c757d;
+    font-weight: 500;
 }
 
 /* List Items */
 .list-group-item {
     border: none;
-    padding: 1rem;
-    margin-bottom: 0.5rem;
-    background-color: #f8f9fa;
-    border-radius: 5px;
+    padding: 1.25rem;
+    margin-bottom: 0.75rem;
+    background-color: #F5F5F5;
+    border-radius: 8px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .list-group-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
 }
 
 .list-group-item:last-child {
@@ -71,101 +74,611 @@
 
 /* Badges */
 .badge {
-    font-weight: 500;
-    padding: 0.5em 1em;
+    font-weight: 600;
+    padding: 0.6em 1.2em;
     border-radius: 30px;
+    font-size: 0.875rem;
 }
 
 .badge.bg-primary {
-    background-color: #4e73df !important;
+    background-color: #5D3FD3 !important;
 }
 
 /* Buttons */
 .btn-outline-primary {
-    border-width: 1px;
-    border-color: #4e73df;
-    color: #4e73df;
+    border-width: 2px;
+    border-color: #5D3FD3;
+    color: #5D3FD3;
+    font-weight: 500;
+    padding: 0.5rem 1.25rem;
 }
 
 .btn-outline-primary:hover {
-    background-color: #4e73df;
-    color: #fff;
+    background-color: #5D3FD3;
+    color: #FFFFFF;
 }
 
 .btn-sm {
-    padding: 0.25rem 0.75rem;
+    padding: 0.375rem 0.875rem;
     font-size: 0.875rem;
-    border-radius: 0.2rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+}
+
+/* Action Buttons - Comprehensive Styling */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    border: 1px solid transparent;
+    min-width: 60px;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.action-buttons .btn:active {
+    transform: translateY(0);
+}
+
+/* View Button */
+.action-buttons .btn-primary,
+.action-buttons .btn-info {
+    background-color: #5D3FD3;
+    border-color: #5D3FD3;
+    color: #FFFFFF;
+}
+
+.action-buttons .btn-primary:hover,
+.action-buttons .btn-info:hover {
+    background-color: #4a32a8;
+    border-color: #4a32a8;
+    color: #FFFFFF;
+}
+
+/* Edit Button */
+.action-buttons .btn-warning {
+    background-color: #48D1CC;
+    border-color: #48D1CC;
+    color: #FFFFFF;
+}
+
+.action-buttons .btn-warning:hover {
+    background-color: #3bb8b3;
+    border-color: #3bb8b3;
+    color: #FFFFFF;
+}
+
+/* Delete Button */
+.action-buttons .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #FFFFFF;
+}
+
+.action-buttons .btn-danger:hover {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+    color: #FFFFFF;
+}
+
+/* Secondary/Outline Buttons */
+.action-buttons .btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+    background-color: transparent;
+}
+
+.action-buttons .btn-outline-secondary:hover {
+    color: #FFFFFF;
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.action-buttons .btn-outline-primary {
+    color: #5D3FD3;
+    border-color: #5D3FD3;
+    background-color: transparent;
+}
+
+.action-buttons .btn-outline-primary:hover {
+    color: #FFFFFF;
+    background-color: #5D3FD3;
+    border-color: #5D3FD3;
+}
+
+.action-buttons .btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+    background-color: transparent;
+}
+
+.action-buttons .btn-outline-danger:hover {
+    color: #FFFFFF;
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Delete Form Styling */
+.delete-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.delete-form .btn {
+    margin: 0;
+}
+
+/* Icon-only buttons */
+.action-buttons .btn i {
+    font-size: 0.875rem;
+}
+
+/* Button Groups */
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
 }
 
 /* Welcome Section */
 .welcome-card {
-    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
-    color: #fff;
-    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #5D3FD3 0%, #4a32a8 100%);
+    color: #FFFFFF;
+    margin-bottom: 2.5rem;
+    padding: 2rem;
 }
 
 .welcome-card .card-title,
 .welcome-card .card-text {
-    color: #fff;
+    color: #FFFFFF;
+}
+
+.welcome-card .card-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.welcome-card .card-text {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Gradient Background for Welcome Cards */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #5D3FD3 0%, #4a32a8 100%) !important;
+}
+
+/* Body adjustments for sticky navbar */
+body {
+    padding-top: 0;
+    background-color: #F5F5F5;
+    color: #333333;
+}
+
+/* Navbar Styles - Always show toggler */
+.navbar {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 0.75rem 0;
+    background-color: #5D3FD3 !important;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: #FFFFFF !important;
+}
+
+/* Always show navbar toggler on all screen sizes */
+.navbar-toggler {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    padding: 0.5rem 0.75rem;
+    border-color: rgba(255,255,255,0.5);
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.25);
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Override Bootstrap's default behavior for navbar-toggler */
+@media (min-width: 992px) {
+    .navbar-toggler {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+}
+
+/* Offcanvas Sidebar Styles */
+.offcanvas {
+    z-index: 1055;
+    width: 280px !important; /* Reduced width for all pages */
+}
+
+.offcanvas-header {
+    background-color: #F5F5F5;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem;
+}
+
+.offcanvas-body {
+    padding: 0;
+    background-color: #FFFFFF;
+}
+
+/* Navigation Links in Sidebar */
+.nav-link {
+    color: #333333;
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    transition: all 0.3s ease;
+    border-radius: 0;
+    margin: 0.25rem 0;
+}
+
+.nav-link:hover {
+    color: #5D3FD3;
+    background-color: rgba(93, 63, 211, 0.1);
+}
+
+.nav-link.active {
+    color: #5D3FD3;
+    background-color: rgba(93, 63, 211, 0.1);
+    border-left: 4px solid #5D3FD3;
+}
+
+.nav-link i {
+    width: 20px;
+    text-align: center;
+    margin-right: 0.75rem;
+}
+
+/* Main Content with improved spacing and overflow fix */
+.main-content {
+    padding: 2.5rem 1rem;
+    margin: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+    margin-top: 2rem;
+    background-color: #F5F5F5;
+}
+
+/* Container adjustments to prevent overflow */
+.container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    max-width: 100%;
+    overflow-x: hidden;
+    margin-top: 1rem;
+}
+
+/* Page Headers */
+.page-header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.page-header h1, .page-header h2, .page-header h3 {
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    color: #333333;
+}
+
+/* Table Improvements */
+.table {
+    margin-bottom: 0;
+    background-color: #FFFFFF;
+}
+
+.table th {
+    background-color: #F5F5F5;
+    border-bottom: 2px solid #dee2e6;
+    padding: 1rem;
+    font-weight: 600;
+    color: #333333;
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+    color: #333333;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(245, 245, 245, 0.5);
+}
+
+/* Form Improvements */
+.form-control, .form-select {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #ced4da;
+    font-size: 1rem;
+    background-color: #FFFFFF;
+    color: #333333;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #5D3FD3;
+    box-shadow: 0 0 0 0.2rem rgba(93, 63, 211, 0.25);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 0.5rem;
+}
+
+/* Alert Improvements */
+.alert {
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    border: none;
+}
+
+/* Modal Improvements */
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    background-color: #F5F5F5;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    background-color: #FFFFFF;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #dee2e6;
+    background-color: #F5F5F5;
+}
+
+/* Stats Card Border Colors */
+.border-left-primary {
+    border-left: 4px solid #5D3FD3 !important;
+}
+
+.border-left-success {
+    border-left: 4px solid #48D1CC !important;
+}
+
+.border-left-info {
+    border-left: 4px solid #48D1CC !important;
+}
+
+.border-left-warning {
+    border-left: 4px solid #ffc107 !important;
+}
+
+.border-left-danger {
+    border-left: 4px solid #dc3545 !important;
+}
+
+/* Text Colors */
+.text-primary {
+    color: #5D3FD3 !important;
+}
+
+.text-success {
+    color: #48D1CC !important;
+}
+
+/* Background Colors */
+.bg-primary {
+    background-color: #5D3FD3 !important;
+}
+
+.bg-success {
+    background-color: #48D1CC !important;
 }
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .container-fluid {
-        padding: 1rem;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
     }
     
     .stats-card {
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
     }
     
     .card-title {
         font-size: 1.5rem;
     }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .card-header {
+        padding: 1.25rem;
+    }
+    
+    .stats-card .card-title {
+        font-size: 2rem;
+    }
+    
+    .list-group-item {
+        padding: 1rem;
+    }
+    
+    .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8rem;
+    }
+    
+    .main-content {
+        padding: 1.5rem 0.75rem;
+        margin: 0;
+        margin-top: 1.5rem;
+    }
+    
+    .welcome-card {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .welcome-card .card-title {
+        font-size: 1.5rem;
+    }
+    
+    .page-header {
+        margin-bottom: 2rem;
+    }
+    
+    /* Mobile action buttons */
+    .action-buttons {
+        gap: 0.25rem;
+    }
+    
+    .action-buttons .btn {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.8rem;
+        min-width: 50px;
+    }
+    
+    /* Table responsive adjustments */
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.5rem;
+    }
 }
 
-/* Responsive dashboard layout */
-@media (max-width: 991.98px) {
-  .sidebar {
-    position: fixed;
-    top: 56px;
-    left: 0;
-    width: 220px;
-    height: calc(100vh - 56px);
-    z-index: 1050;
-    background: #fff;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-    transform: translateX(-100%);
-    transition: transform 0.3s ease-in-out;
-  }
-  .sidebar.show {
-    transform: translateX(0);
-  }
-  .sidebar .nav-link {
-    padding: 0.75rem 1.5rem;
-  }
-  .navbar {
-    z-index: 1100;
-  }
-  .main-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-  }
+@media (max-width: 576px) {
+    .container-fluid {
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-header {
+        padding: 1rem;
+    }
+    
+    .stats-card .card-title {
+        font-size: 1.75rem;
+    }
+    
+    .card-title {
+        font-size: 1.25rem;
+    }
+    
+    .main-content {
+        padding: 1rem 0.5rem;
+        margin: 0;
+        margin-top: 1rem;
+    }
+    
+    .welcome-card {
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .welcome-card .card-title {
+        font-size: 1.25rem;
+    }
+    
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .table th, .table td {
+        padding: 0.75rem;
+    }
+    
+    /* Small screen action buttons */
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: stretch;
+    }
+    
+    .action-buttons .btn {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.8rem;
+        min-width: auto;
+        justify-content: center;
+    }
+    
+    /* Stack action buttons vertically on very small screens */
+    .action-buttons .btn {
+        margin-bottom: 0.25rem;
+    }
+    
+    .action-buttons .btn:last-child {
+        margin-bottom: 0;
+    }
 }
-@media (max-width: 767.98px) {
-  .navbar .navbar-brand {
-    font-size: 1rem;
-  }
-  .sidebar {
-    width: 180px;
-  }
+
+/* Custom Scrollbar Styling for Dashboard Cards */
+.announcements-scroll::-webkit-scrollbar,
+.activities-scroll::-webkit-scrollbar {
+    width: 6px;
 }
-/* Ensure main content fills width on mobile */
-@media (max-width: 991.98px) {
-  main.col-md-9, main.col-lg-10 {
-    width: 100% !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
+
+.announcements-scroll::-webkit-scrollbar-track,
+.activities-scroll::-webkit-scrollbar-track {
+    background: #F5F5F5;
+    border-radius: 3px;
+}
+
+.announcements-scroll::-webkit-scrollbar-thumb,
+.activities-scroll::-webkit-scrollbar-thumb {
+    background: #5D3FD3;
+    border-radius: 3px;
+}
+
+.announcements-scroll::-webkit-scrollbar-thumb:hover,
+.activities-scroll::-webkit-scrollbar-thumb:hover {
+    background: #4a32a8;
+}
+
+/* Firefox scrollbar styling */
+.announcements-scroll,
+.activities-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #5D3FD3 #F5F5F5;
 } 

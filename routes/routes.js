@@ -2,14 +2,15 @@ const express = require("express")
 const router = express.Router()
 const rest = require("../controllers/rest")
 const dashboardController = require("../controllers/dashboardController")
-const { 
-    isAuthenticated, 
-    isAdmin, 
-    isTeacher, 
-    isStudent, 
-    isParent, 
-    isAdminOrTeacher 
-} = require("../middleware/auth")
+const {
+    isAuthenticated,
+    isAdmin,
+    isTeacher,
+    isStudent,
+    isParent,
+    isAdminOrTeacher,
+    isTeacherOrAdmin
+} = require("../middleware/auth");
 const Announcement = require('../models/Announcement')
 const Exam = require('../models/Exam')
 const Subject = require('../models/Subject')
@@ -22,9 +23,35 @@ const Message = require('../models/messages')
 const Parent = require('../models/parent')
 const Attendance = require('../models/Attendance')
 const bcrypt = require('bcrypt')
-const Log = require('../models/log')
 const { logEvent } = require('../services/logService')
 const mongoose = require('mongoose')
+const crypto = require('crypto')
+const attendanceController = require('../controllers/attendanceController');
+const profileController = require('../controllers/profileController');
+const multer = require('multer');
+
+// Setup multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'public/uploads/avatars/')
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        cb(null, req.session.user.id + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop())
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    fileFilter: function (req, file, cb) {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed!'), false);
+        }
+    },
+    limits: { fileSize: 1024 * 1024 * 5 } // 5MB limit
+});
 
 // Public routes
 router.get("/", (req, res) => {res.render("welcome")})
@@ -38,6 +65,7 @@ router.get("/signup", async (req, res) => {
   }
 })
 router.get("/admin/login", (req, res) => {res.render("admin-login", {info:req.flash('info')})})
+router.get('/forgot-password', (req, res) => res.render('forgot-password', {info:req.flash('info')}));
 
 // Authentication routes
 router.post("/login/student", rest.authStudent)
@@ -78,7 +106,186 @@ router.get("/logout", (req, res) => {
   });
 })
 
-// Student routes
+// --- STUDENT ROUTES ---
+// NOTE: Specific routes must come before dynamic routes (e.g., /students/create before /students/:id)
+
+// Show form to create a new student
+router.get('/students/create', isAdminOrTeacher, async (req, res) => {
+  try {
+    const classes = await Class.find();
+    res.render('pages/students/create', { classes, info: req.flash('info'), errors: [] });
+  } catch (error) {
+    console.error(error);
+    req.flash('info', ['Error loading form', 'danger']);
+    res.redirect('/students');
+  }
+});
+
+// Handle creation of a new student
+router.post('/students/create', isAdmin, async (req, res) => {
+    try {
+        const { firstName, lastName, dateOfBirth, gender, class: classInfo, parentEmail, address, parentFirstName, parentLastName, parentPhone } = req.body;
+
+        if (!classInfo || !classInfo.includes('-')) {
+            req.flash('info', ['Invalid class format selected.', 'danger']);
+            return res.redirect('/students/create');
+        }
+
+        const [gradeLevel, section] = classInfo.split('-');
+
+        // Check for existing parent or create a new one
+        let parent = await Parent.findOne({ email: parentEmail });
+        if (!parent && parentEmail) {
+            // Only create parent account if parent details are provided
+            if (parentFirstName && parentLastName && parentPhone) {
+                const parentPassword = crypto.randomBytes(8).toString('hex');
+                const salt = await bcrypt.genSalt(10);
+                const hashedParentPassword = await bcrypt.hash(parentPassword, salt);
+
+                // Create temporary studentId for parent (will be updated after student creation)
+                const tempStudentId = `TEMP_${Date.now()}`;
+
+                parent = new Parent({
+                    firstName: parentFirstName,
+                    lastName: parentLastName,
+                    email: parentEmail,
+                    phone: parentPhone,
+                    password: hashedParentPassword,
+                    studentId: tempStudentId
+                });
+                await parent.save();
+                await logEvent('parent_created_auto', req.session.user.id, { parentEmail });
+            }
+            // If parent details are not provided, that's fine - parent can register later using the email
+        }
+
+        const year = new Date().getFullYear();
+        const random = Math.floor(1000 + Math.random() * 9000);
+        const studentId = `F${gradeLevel}/${year}/${random}`;
+
+        const tempPassword = crypto.randomBytes(8).toString('hex');
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(tempPassword, salt);
+
+        const newStudent = new Student({
+            firstName,
+            lastName,
+            studentId,
+            dateOfBirth,
+            gender,
+            gradeLevel,
+            section,
+            parentEmail,
+            address,
+            password: hashedPassword,
+        });
+
+        await newStudent.save();
+
+        // Automatically assign all subjects for the student's grade level
+        const subjects = await Subject.find({ gradeLevel: parseInt(gradeLevel) });
+        if (subjects.length > 0) {
+            newStudent.subjects = subjects.map(subject => subject._id);
+            await newStudent.save();
+        }
+
+        // Update parent's studentId to point to the actual student
+        if (parent) {
+            parent.studentId = newStudent.studentId;
+            await parent.save();
+        }
+        
+        await logEvent('student_created', req.session.user.id, { studentId: newStudent.studentId, studentName: `${firstName} ${lastName}` });
+
+        req.flash('info', ['Student created successfully!', 'success']);
+        res.redirect(`/students?newStudentId=${studentId}&newStudentPassword=${tempPassword}`);
+
+    } catch (error) {
+        console.error("Error creating student:", error);
+        req.flash('info', ['Failed to create student. Check all fields.', 'danger']);
+        res.redirect('/students');
+    }
+});
+
+// Show form to edit a student
+router.get('/students/edit/:id', isAdmin, async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id);
+        const classes = await Class.find();
+        if (!student) {
+            req.flash('info', ['Student not found.', 'danger']);
+            return res.redirect('/students');
+        }
+        if (student.dateOfBirth && !(student.dateOfBirth instanceof Date)) {
+            student.dateOfBirth = new Date(student.dateOfBirth);
+        }
+        const subjects = await Subject.find();
+        let parent = null;
+        if (student.parentEmail) {
+            parent = await Parent.findOne({ email: student.parentEmail });
+        }
+        res.render('pages/students/edit', { title: 'Edit Student', student, classes, parent, subjects });
+    } catch (error) {
+        console.error(error);
+        req.flash('info', ['Error loading edit form.', 'danger']);
+        res.redirect('/students');
+    }
+});
+
+// Handle edit student POST
+router.post('/students/edit/:id', isAdmin, async (req, res) => {
+    try {
+        const { firstName, lastName, dateOfBirth, section, studentId, address, subjects } = req.body;
+        
+        const updateData = {
+            firstName,
+            lastName,
+            dateOfBirth,
+            section,
+            studentId,
+            address
+        };
+
+        // Handle subjects if provided
+        if (subjects) {
+            const subjectIds = Array.isArray(subjects) ? subjects : [subjects];
+            updateData.subjects = subjectIds.filter(s => s); // Remove empty values
+        }
+
+        await Student.findByIdAndUpdate(req.params.id, updateData);
+        
+        await logEvent('student_updated', req.session.user.id, { studentId: req.params.id });
+        
+        req.flash('info', ['Student updated successfully', 'success']);
+        res.redirect('/students');
+    } catch (error) {
+        console.error("Error updating student:", error);
+        req.flash('info', ['Failed to update student.', 'danger']);
+        res.redirect(`/students/edit/${req.params.id}`);
+    }
+});
+
+// View a specific student's details
+router.get('/students/:id', isAdminOrTeacher, async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id).populate('subjects');
+        if (!student) {
+            req.flash('info', ['Student not found.', 'danger']);
+            return res.redirect('/students');
+        }
+        let parent = null;
+        if (student.parentEmail) {
+            parent = await Parent.findOne({ email: student.parentEmail });
+        }
+        res.render('pages/students/show', { title: 'Student Details', student, parent });
+    } catch (error) {
+        console.error(error);
+        req.flash('info', ['Error loading student details.', 'danger']);
+        res.redirect('/students');
+    }
+});
+
+// List all students
 router.get('/students', isAdminOrTeacher, async (req, res) => {
     try {
         const { search, gradeLevel, section } = req.query;
@@ -112,7 +319,8 @@ router.get('/students', isAdminOrTeacher, async (req, res) => {
             classes,
             search,
             gradeLevel,
-            section
+            section,
+            layout: false
         });
     } catch (error) {
         console.error(error);
@@ -121,7 +329,35 @@ router.get('/students', isAdminOrTeacher, async (req, res) => {
     }
 });
 
+// Handle deletion of a student
+router.post('/students/delete/:id', isAdmin, async (req, res) => {
+    try {
+        const student = await Student.findByIdAndDelete(req.params.id);
+        if (student) {
+            // After deleting a student, check if their parent has other children
+            const parent = await Parent.findOne({ email: student.parentEmail });
+            if (parent) {
+                const remainingChildren = await Student.countDocuments({ parentEmail: parent.email });
+                if (remainingChildren === 0) {
+                    await Parent.findByIdAndDelete(parent._id);
+                    await logEvent('parent_auto_deleted', req.session.user.id, { parentEmail: parent.email });
+                }
+            }
+            await logEvent('student_deleted', req.session.user.id, { studentId: student.studentId });
+            req.flash('info', ['Student and associated data deleted successfully.', 'success']);
+        } else {
+            req.flash('info', ['Student not found.', 'danger']);
+        }
+        res.redirect('/students');
+    } catch (error) {
+        console.error("Error deleting student:", error);
+        req.flash('info', ['Failed to delete student.', 'danger']);
+        res.redirect('/students');
+    }
+});
+
 // Teacher routes
+
 router.get('/teachers', isAdmin, async (req, res) => {
     try {
         const { search, subject, gradeLevel, section, sortBy, sortOrder } = req.query;
@@ -161,27 +397,24 @@ router.get('/teachers', isAdmin, async (req, res) => {
             teachers,
             subjects,
             classes,
-            search,
             selectedSubject: subject,
             selectedGradeLevel: gradeLevel,
             selectedSection: section,
-            sortBy,
-            sortOrder
+            user: req.session.user,
+            layout: false
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error loading teachers', error);
         req.flash('info', ['Error loading teachers', 'danger']);
+        // Also render the index page on error, but with empty data
         res.render('pages/teachers/index', {
             title: 'Teachers',
             teachers: [],
             subjects: [],
             classes: [],
-            search: req.query.search,
-            selectedSubject: req.query.subject,
-            selectedGradeLevel: req.query.gradeLevel,
-            selectedSection: req.query.section,
-            sortBy: req.query.sortBy,
-            sortOrder: req.query.sortOrder
+            user: req.session.user,
+            info: req.flash('info'),
+            layout: false
         });
     }
 });
@@ -228,6 +461,7 @@ router.post('/teachers/edit/:id', isAdmin, async (req, res) => {
       req.flash('info', ['A teacher cannot be assigned more than 3 subjects.', 'danger']);
       return res.redirect(`/teachers/edit/${req.params.id}`);
     }
+    
     // Parse assignedClasses from form values like '1-A'
     let assignedClassesArr = [];
     if (assignedClasses) {
@@ -237,7 +471,46 @@ router.post('/teachers/edit/:id', isAdmin, async (req, res) => {
         return { gradeLevel, section };
       });
     }
-    await Teacher.findByIdAndUpdate(req.params.id, { firstName, lastName, email, subjects, assignedClasses: assignedClassesArr });
+
+    const teacher = await Teacher.findById(req.params.id);
+    if (!teacher) {
+      req.flash('info', ['Teacher not found.', 'danger']);
+      return res.redirect('/teachers');
+    }
+
+    // Update basic teacher information
+    teacher.firstName = firstName;
+    teacher.lastName = lastName;
+    teacher.email = email;
+    teacher.assignedClasses = assignedClassesArr;
+
+    // Handle subject assignments
+    const currentSubjectIds = teacher.subjects.map(s => s.toString());
+    const newSubjectIds = subjects.filter(s => s); // Remove empty values
+
+    // Remove subjects that are no longer assigned
+    for (const subjectId of currentSubjectIds) {
+      if (!newSubjectIds.includes(subjectId)) {
+        try {
+          await teacher.removeSubject(subjectId);
+        } catch (error) {
+          console.error('Error removing subject:', error);
+        }
+      }
+    }
+
+    // Add new subjects
+    for (const subjectId of newSubjectIds) {
+      if (!currentSubjectIds.includes(subjectId)) {
+        try {
+          await teacher.addSubject(subjectId);
+        } catch (error) {
+          req.flash('info', [error.message, 'danger']);
+          return res.redirect(`/teachers/edit/${req.params.id}`);
+        }
+      }
+    }
+
     await logEvent('teacher_updated', req.session.user.id, { teacherId: req.params.id, changes: { firstName, lastName, email, subjects, assignedClasses: assignedClassesArr } });
     req.flash('info', ['Teacher updated successfully', 'success']);
     res.redirect('/teachers');
@@ -266,12 +539,13 @@ router.post('/teachers/delete/:id', isAdmin, async (req, res) => {
 router.get('/classes', isAdmin, async (req, res) => {
     try {
         const classes = await Class.find().populate('teacherId');
-        const teachers = await Teacher.find();
         const students = await Student.find();
+        const teachers = await Teacher.find();
+
         res.render('pages/classes/index', { title: 'Classes', classes, teachers, students, user: req.session.user, info: req.flash('info'), errors: [] });
     } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error loading classes', 'danger']);
+        console.error("Error loading classes:", error);
+        req.flash('info', ['Failed to load classes.', 'danger']);
         res.redirect('/dashboard');
     }
 })
@@ -286,7 +560,14 @@ router.get('/classes/:id', isAdmin, async (req, res) => {
         }
         // Find all students with matching gradeLevel and section
         const students = await Student.find({ gradeLevel: String(classObj.gradeLevel), section: classObj.section });
-        res.render('pages/classes/show', { title: classObj.name, classObj, students, user: req.session.user });
+        res.render('pages/classes/show', { 
+            title: classObj.name, 
+            classObj, 
+            students, 
+            user: req.session.user,
+            info: req.flash('info'),
+            layout: false
+        });
     } catch (error) {
         console.error(error);
         req.flash('info', ['Error loading class', 'danger']);
@@ -297,13 +578,20 @@ router.get('/classes/:id', isAdmin, async (req, res) => {
 // Edit class form
 router.get('/classes/edit/:id', isAdmin, async (req, res) => {
     try {
-        const classObj = await Class.findById(req.params.id);
+        const classObj = await Class.findById(req.params.id).populate('teacherId');
         const teachers = await Teacher.find();
         if (!classObj) {
             req.flash('info', ['Class not found', 'danger']);
             return res.redirect('/classes');
         }
-        res.render('pages/classes/edit', { title: 'Edit Class', classObj, teachers, user: req.session.user });
+        res.render('pages/classes/edit', { 
+            title: 'Edit Class', 
+            classObj, 
+            teachers, 
+            user: req.session.user,
+            info: req.flash('info'),
+            layout: false
+        });
     } catch (error) {
         console.error(error);
         req.flash('info', ['Error loading class for edit', 'danger']);
@@ -315,9 +603,14 @@ router.get('/classes/edit/:id', isAdmin, async (req, res) => {
 router.post('/classes/edit/:id', isAdmin, async (req, res) => {
     try {
         let { gradeLevel, section, teacherId } = req.body;
-        if (teacherId && typeof teacherId === 'string' && teacherId.match(/^[a-fA-F0-9]{24}$/)) {
+        
+        // Handle empty teacherId - convert empty string to null
+        if (!teacherId || teacherId.trim() === '') {
+            teacherId = null;
+        } else if (typeof teacherId === 'string' && teacherId.match(/^[a-fA-F0-9]{24}$/)) {
             teacherId = new mongoose.Types.ObjectId(teacherId);
         }
+        
         await Class.findByIdAndUpdate(req.params.id, { gradeLevel, section, teacherId });
         req.flash('info', ['Class updated successfully', 'success']);
         res.redirect('/classes');
@@ -345,9 +638,14 @@ router.post('/classes/delete/:id', isAdmin, async (req, res) => {
 router.post('/classes', isAdmin, async (req, res) => {
     try {
         let { gradeLevel, section, teacherId } = req.body;
-        if (teacherId && typeof teacherId === 'string' && teacherId.match(/^[a-fA-F0-9]{24}$/)) {
+        
+        // Handle empty teacherId - convert empty string to null
+        if (!teacherId || teacherId.trim() === '') {
+            teacherId = null;
+        } else if (typeof teacherId === 'string' && teacherId.match(/^[a-fA-F0-9]{24}$/)) {
             teacherId = new mongoose.Types.ObjectId(teacherId);
         }
+        
         await Class.create({ gradeLevel, section, teacherId, academicYear: new Date().getFullYear().toString() });
         req.flash('info', ['Class added successfully', 'success']);
         res.redirect('/classes');
@@ -361,37 +659,15 @@ router.post('/classes', isAdmin, async (req, res) => {
 // Subject routes
 router.get('/subjects', isAdminOrTeacher, async (req, res) => {
     try {
-        let subjects;
-        if (req.session.user.role === 'teacher') {
-            const teacher = await Teacher.findOne({ teacherId: req.session.user.teacherId })
-                .populate({
-                    path: 'subjects',
-                    populate: {
-                        path: 'teacherId'
-                    }
-                });
-            subjects = teacher.subjects || [];
-        } else {
-            subjects = await Subject.find().populate('teacherId');
-        }
-
-        const classes = await Class.find();
+        const subjects = await Subject.find().populate('teacherId');
         const teachers = await Teacher.find();
-        res.render('pages/subjects/index', {
-            title: 'Subjects',
-            subjects,
-            classes,
-            teachers,
-            user: req.session.user,
-            info: req.flash('info'),
-            errors: []
-        });
+        const classes = await Class.find();
+        res.render('pages/subjects/index', { title: 'Subjects', subjects, teachers, classes, user: req.session.user });
     } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error loading subjects', 'danger']);
-        res.redirect('/dashboard');
+        console.error("Error fetching subjects:", error);
+        res.status(500).send("Error fetching subjects");
     }
-})
+});
 
 // Show single subject
 router.get('/subjects/:id', isAdminOrTeacher, async (req, res) => {
@@ -406,7 +682,8 @@ router.get('/subjects/:id', isAdminOrTeacher, async (req, res) => {
             subject,
             user: req.session.user,
             info: req.flash('info'),
-            errors: []
+            errors: [],
+            layout: false
         });
     } catch (error) {
         console.error(error);
@@ -431,14 +708,21 @@ router.post('/subjects', isAdmin, async (req, res) => {
             code,
             gradeLevel,
             credits,
-            teacherId: teacherId || null
+            teacherId: null, // Start with no teacher
         });
 
         await newSubject.save();
 
-        // If a teacher was assigned, add the subject to their list
+        // If a teacher was assigned, use the assignTeacher method
         if (teacherId) {
-            await Teacher.findByIdAndUpdate(teacherId, { $addToSet: { subjects: newSubject._id } });
+            try {
+                await newSubject.assignTeacher(teacherId);
+            } catch (error) {
+                // If teacher assignment fails, delete the subject and show error
+                await Subject.findByIdAndDelete(newSubject._id);
+                req.flash('info', [error.message, 'danger']);
+                return res.redirect('/subjects');
+            }
         }
         
         await logEvent('subject_created', req.session.user.id, { subjectId: newSubject._id, name, code, gradeLevel, credits, teacherId });
@@ -468,7 +752,9 @@ router.get('/subjects/edit/:id', isAdmin, async (req, res) => {
             title: 'Edit Subject',
             subject,
             teachers,
-            user: req.session.user
+            user: req.session.user,
+            info: req.flash('info'),
+            layout: false
         });
     } catch (error) {
         console.error(error);
@@ -480,7 +766,7 @@ router.get('/subjects/edit/:id', isAdmin, async (req, res) => {
 // Handle Edit Subject
 router.post('/subjects/edit/:id', isAdmin, async (req, res) => {
     try {
-        const { name, code, gradeLevel, credits, teacherId } = req.body;
+        const { name, code, gradeLevel, credits, teacherId, description } = req.body;
         const subjectId = req.params.id;
 
         const subject = await Subject.findById(subjectId);
@@ -489,26 +775,20 @@ router.post('/subjects/edit/:id', isAdmin, async (req, res) => {
             return res.redirect('/subjects');
         }
 
-        const oldTeacherId = subject.teacherId;
-
-        // Update the subject document
+        // Update basic subject information
         subject.name = name;
         subject.code = code;
         subject.gradeLevel = gradeLevel;
         subject.credits = credits;
-        subject.teacherId = teacherId || null;
+        subject.description = description || '';
         await subject.save();
 
-        // If the teacher was changed, update both teachers' records
-        if (oldTeacherId?.toString() !== teacherId) {
-            // Remove subject from the old teacher
-            if (oldTeacherId) {
-                await Teacher.findByIdAndUpdate(oldTeacherId, { $pull: { subjects: subjectId } });
-            }
-            // Add subject to the new teacher
-            if (teacherId) {
-                await Teacher.findByIdAndUpdate(teacherId, { $addToSet: { subjects: subjectId } });
-            }
+        // Handle teacher assignment using the assignTeacher method
+        try {
+            await subject.assignTeacher(teacherId || null);
+        } catch (error) {
+            req.flash('info', [error.message, 'danger']);
+            return res.redirect(`/subjects/edit/${req.params.id}`);
         }
 
         await logEvent('subject_updated', req.session.user.id, { subjectId: subjectId, changes: req.body });
@@ -525,17 +805,22 @@ router.post('/subjects/edit/:id', isAdmin, async (req, res) => {
 router.post('/subjects/delete/:id', isAdmin, async (req, res) => {
     try {
         const subjectId = req.params.id;
-        const subject = await Subject.findByIdAndDelete(subjectId);
+        const subject = await Subject.findById(subjectId);
 
         if (!subject) {
             req.flash('info', ['Subject not found.', 'danger']);
             return res.redirect('/subjects');
         }
 
-        // If the subject was assigned to a teacher, remove it from their list
+        // Remove subject from teacher's subjects array
         if (subject.teacherId) {
-            await Teacher.findByIdAndUpdate(subject.teacherId, { $pull: { subjects: subjectId } });
+            await Teacher.findByIdAndUpdate(subject.teacherId, { 
+                $pull: { subjects: subjectId } 
+            });
         }
+
+        // Delete the subject
+        await Subject.findByIdAndDelete(subjectId);
 
         await logEvent('subject_deleted', req.session.user.id, { subjectId: subjectId, name: subject.name, code: subject.code });
         req.flash('info', ['Subject deleted successfully!', 'success']);
@@ -550,28 +835,33 @@ router.post('/subjects/delete/:id', isAdmin, async (req, res) => {
 // Exam routes
 router.get('/exams', isAuthenticated, async (req, res) => {
     try {
-        let exams = [];
+        let query = {};
         if (req.session.user.role === 'teacher') {
-            const teacher = await Teacher.findOne({ teacherId: req.session.user.teacherId }).populate('subjects');
+            const teacher = await Teacher.findById(req.session.user.id).populate('subjects');
             const subjectIds = teacher.subjects.map(s => s._id);
             const assignedClasses = teacher.assignedClasses || [];
-            exams = await Exam.find({
-                subject: { $in: subjectIds },
-                $or: assignedClasses.map(cls => ({ gradeLevel: cls.gradeLevel, section: cls.section }))
-            })
-            .populate('subject')
-            .sort({ date: 1 });
-        } else {
-            exams = await Exam.find()
-                .populate('subject')
-                .sort({ date: 1 });
+            const classIds = assignedClasses.map(c => c._id);
+            
+            query = {
+                $or: [
+                    { teacherId: req.session.user.id },
+                    { targetClasses: { $in: classIds } }
+                ]
+            };
         }
+
+        const exams = await Exam.find(query)
+            .populate('subject')
+            .populate('targetClasses')
+            .sort({ date: -1 });
+
         res.render('pages/exams/index', {
             title: 'Exams',
             exams,
             user: req.session.user,
             info: req.flash('info'),
-            errors: []
+            errors: [],
+            layout: false
         });
     } catch (error) {
         console.error(error);
@@ -582,61 +872,48 @@ router.get('/exams', isAuthenticated, async (req, res) => {
 
 router.get('/exams/add', isAuthenticated, async (req, res) => {
     try {
-        let subjects = [];
-        let assignedClasses = [];
-        let teachers = [];
-        if (req.session.user.role === 'teacher') {
-            const teacher = await Teacher.findOne({ teacherId: req.session.user.teacherId }).populate('subjects');
-            subjects = teacher.subjects || [];
-            assignedClasses = teacher.assignedClasses || [];
-        } else {
-            subjects = await Subject.find();
-            teachers = await Teacher.find();
-            assignedClasses = [];
-        }
+        const classes = await Class.find().sort({ gradeLevel: 1, section: 1 });
         res.render('pages/exams/add', {
             title: 'Add Exam',
             user: req.session.user,
-            subjects,
-            teachers,
-            assignedClasses,
             info: req.flash('info'),
-            errors: []
+            errors: [],
+            classes,
+            layout: false
         });
     } catch (error) {
         console.error(error);
-        req.flash('info', ['Error loading form data', 'danger']);
+        req.flash('info', ['Error loading form', 'danger']);
         res.redirect('/exams');
     }
 });
 
 router.post('/exams/add', isAuthenticated, async (req, res) => {
     try {
-        let { title, name, date, subject, gradeLevel, type, teacherId, totalMarks, duration, startTime, term, class: classSection } = req.body;
-        let section = req.body.section;
-        // If teacher, parse classSection (e.g., '1-A')
-        if (req.session.user.role === 'teacher' && classSection) {
-            const [grade, sec] = classSection.split('-');
-            gradeLevel = grade;
-            section = sec;
-        }
+        const { title, type, date, targetClasses, isPublic } = req.body;
+        
         const exam = new Exam({
             title,
-            name,
-            date,
-            subject,
-            gradeLevel,
-            section,
             type,
-            teacherId,
-            totalMarks,
-            duration,
-            startTime,
-            term
+            date,
+            targetClasses: targetClasses || [],
+            teacherId: req.session.user.role === 'teacher' ? req.session.user.id : null
         });
         await exam.save();
-        await logEvent('exam_created', req.session.user.id, { examId: exam._id, title, name, date, subject, gradeLevel, section, type, teacherId, totalMarks, duration, startTime, term });
-        req.flash('info', ['Exam added successfully', 'success']);
+
+        const announcement = new Announcement({
+            title: `New Exam Scheduled: ${title}`,
+            content: `A new exam of type '${type}' has been scheduled for ${new Date(date).toLocaleDateString()}. Further details will be provided by the subject teachers.`,
+            author: req.session.user.id,
+            authorModel: req.session.user.role === 'teacher' ? 'Teacher' : 'Admin',
+            targetAudience: ['student', 'parent', 'teacher'],
+            targetClasses: isPublic ? [] : targetClasses || [],
+            priority: 'Medium'
+        });
+        await announcement.save();
+
+        await logEvent('exam_created', req.session.user.id, { examId: exam._id, title, type, date, targetClasses, isPublic });
+        req.flash('info', ['Exam and announcement created successfully', 'success']);
         res.redirect('/exams');
     } catch (error) {
         console.error(error);
@@ -650,6 +927,7 @@ router.get('/exams/edit/:id', isAuthenticated, async (req, res) => {
     try {
         const exam = await Exam.findById(req.params.id).populate('subject');
         const teachers = await Teacher.find();
+        const classes = await Class.find().sort({ gradeLevel: 1, section: 1 });
         // Fetch subjects for the current teacher (if any)
         let subjects = [];
         if (exam && exam.teacherId) {
@@ -661,8 +939,10 @@ router.get('/exams/edit/:id', isAuthenticated, async (req, res) => {
             exam,
             teachers,
             subjects,
+            classes,
             info: req.flash('info'),
-            errors: []
+            errors: [],
+            layout: false
         });
     } catch (error) {
         console.error(error);
@@ -674,22 +954,28 @@ router.get('/exams/edit/:id', isAuthenticated, async (req, res) => {
 // Edit Exam - POST
 router.post('/exams/edit/:id', isAuthenticated, async (req, res) => {
     try {
-        const { title, name, date, subject, gradeLevel, type, teacherId, totalMarks, duration, startTime, term } = req.body;
-        await Exam.findByIdAndUpdate(req.params.id, {
-            title,
-            name,
-            date,
-            subject,
-            gradeLevel,
-            type,
-            teacherId,
-            totalMarks,
-            duration,
-            startTime,
-            term
+        const { title, date, type, targetClasses, subject, duration, startTime } = req.body;
+        let updateData = { title, date, type, targetClasses: Array.isArray(targetClasses) ? targetClasses : (targetClasses ? [targetClasses] : []) };
+
+        if (req.session.user.role === 'teacher') {
+            updateData = { ...updateData, subject, duration, startTime };
+        }
+
+        await Exam.findByIdAndUpdate(req.params.id, updateData);
+
+        const announcement = new Announcement({
+            title: `[UPDATE] Exam Details Changed: ${updateData.title}`,
+            content: `The details for the exam '${updateData.title}' scheduled on ${new Date(updateData.date).toLocaleDateString()} have been updated. Please check the exam schedule for the latest information.`,
+            author: req.session.user.id,
+            authorModel: req.session.user.role === 'teacher' ? 'Teacher' : 'Admin',
+            targetAudience: ['student', 'parent', 'teacher'],
+            targetClasses: updateData.targetClasses || [],
+            priority: 'Medium'
         });
-        await logEvent('exam_updated', req.session.user.id, { examId: req.params.id, changes: req.body });
-        req.flash('info', ['Exam updated successfully', 'success']);
+        await announcement.save();
+
+        await logEvent('exam_updated', req.session.user.id, { examId: req.params.id, changes: updateData });
+        req.flash('info', ['Exam updated and announcement sent successfully', 'success']);
         res.redirect('/exams');
     } catch (error) {
         console.error(error);
@@ -703,13 +989,43 @@ router.get('/results', isAuthenticated, async (req, res) => {
     try {
         const results = await Grade.find().sort({ createdAt: -1 });
         const exams = await Exam.find().populate('subject').sort({ date: -1 });
+        const classes = await Class.find().sort({ gradeLevel: 1, section: 1 });
+        const subjects = await Subject.find().sort({ name: 1 });
+        const students = await Student.find().sort({ firstName: 1, lastName: 1 });
+        
+        // Process results to add student, class, and exam information
+        const processedResults = results.map(result => {
+            // Find student by studentId
+            const student = students.find(s => s.studentId === result.studentId);
+            // Find class by student's gradeLevel and section
+            let classObj = null;
+            if (student) {
+                classObj = classes.find(
+                    c => c.gradeLevel == student.gradeLevel && c.section == student.section
+                );
+            }
+            // Find exam by subject and examType
+            const exam = exams.find(e => e.subject.name === result.subject && e.type === result.examType);
+
+            return {
+                ...result.toObject(),
+                student: student || { firstName: 'Unknown', lastName: 'Student', gradeLevel: '', section: '' },
+                classObj: classObj || { name: 'Unknown', section: '' },
+                exam: exam || { subject: { name: result.subject }, type: result.examType, class: { name: 'Unknown', section: 'Unknown' } }
+            };
+        });
+        
         res.render('pages/results/index', {
             title: 'Results',
-            results,
+            results: processedResults,
             exams,
+            classes,
+            subjects,
+            students,
             user: req.session.user,
             info: req.flash('info'),
-            errors: []
+            errors: [],
+            layout: false
         });
     } catch (error) {
         console.error(error);
@@ -724,11 +1040,15 @@ router.get('/attendance', isAuthenticated, (req, res) => {
         return res.redirect('/attendance/report');
     } else if (req.session.user.role === 'teacher') {
         return res.redirect('/attendance/take');
+    } else if (req.session.user.role === 'student') {
+        return res.redirect('/attendance/my-attendance');
     } else {
         req.flash('info', ['You do not have permission to view this page.', 'danger']);
         return res.redirect('/dashboard');
     }
 });
+
+router.get('/attendance/my-attendance', isAuthenticated, isStudent, attendanceController.viewStudentAttendance);
 
 router.get('/attendance/report', isAdmin, async (req, res) => {
     try {
@@ -744,7 +1064,7 @@ router.get('/attendance/report', isAdmin, async (req, res) => {
         }
 
         if (gradeLevel && section) {
-            const classObj = await Class.findOne({ gradeLevel, section });
+            const classObj = await Class.findOne({ gradeLevel: parseInt(gradeLevel), section });
             if (classObj) {
                 filter.classId = classObj._id;
             }
@@ -761,10 +1081,12 @@ router.get('/attendance/report', isAdmin, async (req, res) => {
         res.render('pages/attendance/report', {
             title: 'Attendance Report',
             attendance,
-            classes,
+            classes: await Class.find(), // For filter dropdowns
             selectedDate: date,
             selectedGradeLevel: gradeLevel,
-            selectedSection: section
+            selectedSection: section,
+            user: req.session.user,
+            layout: false
         });
     } catch (error) {
         console.error("Error fetching attendance report:", error);
@@ -777,7 +1099,7 @@ router.get('/attendance/report', isAdmin, async (req, res) => {
 router.get('/attendance/class/:id', isAdmin, async (req, res) => {
     try {
         const classId = req.params.id;
-        const classObj = await Class.findById(classId);
+        const classObj = await Class.findById(classId).populate('teacherId');
 
         if (!classObj) {
             req.flash('info', ['Class not found.', 'danger']);
@@ -792,14 +1114,15 @@ router.get('/attendance/class/:id', isAdmin, async (req, res) => {
 
         res.render('pages/attendance/class', {
             title: `Attendance for ${classObj.name}`,
-            classObj,
             attendance,
-            user: req.session.user
+            classObj,
+            user: req.session.user,
+            layout: false
         });
 
     } catch (error) {
         console.error("Error fetching class attendance:", error);
-        req.flash('info', ['Failed to load attendance data for the class.', 'danger']);
+        req.flash('info', ['Failed to load class attendance.', 'danger']);
         res.redirect('/classes');
     }
 });
@@ -807,13 +1130,55 @@ router.get('/attendance/class/:id', isAdmin, async (req, res) => {
 // Announcement routes
 router.get('/announcements', isAuthenticated, async (req, res) => {
     try {
-        const announcements = await Announcement.find().sort({ createdAt: -1 });
+        let query = {
+            $or: [
+                { targetClasses: { $exists: false } },
+                { targetClasses: { $size: 0 } }
+            ]
+        };
+
+        const user = req.session.user;
+        if (user.role === 'student') {
+            const student = await Student.findById(user.id);
+            if (student) {
+                const studentClass = await Class.findOne({ gradeLevel: parseInt(student.gradeLevel), section: student.section });
+                if (studentClass) {
+                    query.$or.push({ targetClasses: studentClass._id });
+                }
+            }
+        } else if (user.role === 'teacher') {
+            const teacher = await Teacher.findById(user.id);
+            if (teacher && teacher.assignedClasses && teacher.assignedClasses.length > 0) {
+                const classIds = teacher.assignedClasses.map(c => c._id);
+                query.$or.push({ targetClasses: { $in: classIds } });
+            }
+        } else if (user.role === 'parent') {
+            const parent = await Parent.findById(user.id);
+            if (parent && parent.studentId) {
+                const student = await Student.findOne({ studentId: parent.studentId });
+                if (student) {
+                    const studentClass = await Class.findOne({ gradeLevel: parseInt(student.gradeLevel), section: student.section });
+                    if (studentClass) {
+                        query.$or.push({ targetClasses: studentClass._id });
+                    }
+                }
+            }
+        } else if (user.role === 'admin') {
+            query = {}; // Admin sees all announcements
+        }
+        
+        const announcements = await Announcement.find(query)
+            .populate('author')
+            .populate('targetClasses')
+            .sort({ createdAt: -1 });
+
         res.render('pages/announcements/index', { 
             title: 'Announcements', 
             announcements,
             user: req.session.user,
             info: req.flash('info'),
-            errors: []
+            errors: [],
+            layout: false
         });
     } catch (error) {
         console.error(error);
@@ -822,61 +1187,14 @@ router.get('/announcements', isAuthenticated, async (req, res) => {
     }
 })
 
-// Show single announcement
-router.get('/announcements/:id', isAuthenticated, async (req, res) => {
-    try {
-        const announcement = await Announcement.findById(req.params.id).populate('author');
-        if (!announcement) {
-            req.flash('info', ['Announcement not found', 'danger']);
-            return res.redirect('/announcements');
-        }
-        res.render('pages/announcements/show', {
-            title: announcement.title,
-            announcement,
-            user: req.session.user,
-            info: req.flash('info'),
-            errors: []
-        });
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error loading announcement', 'danger']);
-        res.redirect('/announcements');
-    }
-});
-
-// Profile routes
-router.get('/profile', isAuthenticated, async (req, res) => {
-    res.render('pages/profile/index', { title: 'Profile' })
-})
-
-router.get('/api/subjects/by-teacher/:teacherId', isAuthenticated, async (req, res) => {
-    try {
-        const subjects = await Subject.find({ teacherId: req.params.teacherId });
-        res.json(subjects);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch subjects' });
-    }
-});
-
-router.delete('/exams/:id', isAuthenticated, async (req, res) => {
-    try {
-        console.log('DELETE /exams/:id called', req.params.id, 'User:', req.session.user);
-        await Exam.findByIdAndDelete(req.params.id);
-        await logEvent('exam_deleted', req.session.user.id, { examId: req.params.id });
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error deleting exam:', error);
-        res.json({ success: false, message: 'Error deleting exam' });
-    }
-});
-
 // Create Announcement - GET
 router.get('/announcements/create', isAuthenticated, (req, res) => {
     res.render('pages/announcements/create', {
         title: 'Create Announcement',
         user: req.session.user,
         info: req.flash('info'),
-        errors: []
+        errors: [],
+        layout: false
     });
 });
 
@@ -920,371 +1238,334 @@ router.post('/announcements/create', isAuthenticated, async (req, res) => {
     }
 });
 
+// Show single announcement
+router.get('/announcements/:id', isAuthenticated, async (req, res) => {
+    try {
+        const announcement = await Announcement.findById(req.params.id).populate('author');
+        if (!announcement) {
+            req.flash('info', ['Announcement not found', 'danger']);
+            return res.redirect('/announcements');
+        }
+        res.render('pages/announcements/show', {
+            title: announcement.title,
+            announcement,
+            user: req.session.user,
+            info: req.flash('info'),
+            errors: [],
+            layout: false
+        });
+    } catch (error) {
+        console.error(error);
+        req.flash('info', ['Error loading announcement', 'danger']);
+        res.redirect('/announcements');
+    }
+});
+
+// Edit announcement - GET
+router.get('/announcements/:id/edit', isAuthenticated, async (req, res) => {
+    try {
+        const announcement = await Announcement.findById(req.params.id).populate('author');
+        if (!announcement) {
+            req.flash('info', ['Announcement not found', 'danger']);
+            return res.redirect('/announcements');
+        }
+
+        // Check if user has permission to edit
+        const user = req.session.user;
+        if (user.role !== 'admin' && 
+            (user.role !== 'teacher' || announcement.author.toString() !== user.id)) {
+            req.flash('info', ['You do not have permission to edit this announcement', 'danger']);
+            return res.redirect('/announcements');
+        }
+
+        res.render('pages/announcements/edit', {
+            title: 'Edit Announcement',
+            announcement,
+            user: req.session.user,
+            info: req.flash('info'),
+            errors: [],
+            layout: false
+        });
+    } catch (error) {
+        console.error(error);
+        req.flash('info', ['Error loading announcement', 'danger']);
+        res.redirect('/announcements');
+    }
+});
+
+// Edit announcement - POST
+router.post('/announcements/:id/edit', isAuthenticated, async (req, res) => {
+    try {
+        const { title, content, targetAudience, gradeLevel, priority, expiryDate } = req.body;
+        
+        const announcement = await Announcement.findById(req.params.id);
+        if (!announcement) {
+            req.flash('info', ['Announcement not found', 'danger']);
+            return res.redirect('/announcements');
+        }
+
+        // Check if user has permission to edit
+        const user = req.session.user;
+        if (user.role !== 'admin' && 
+            (user.role !== 'teacher' || announcement.author.toString() !== user.id)) {
+            req.flash('info', ['You do not have permission to edit this announcement', 'danger']);
+            return res.redirect('/announcements');
+        }
+
+        // Update announcement
+        announcement.title = title;
+        announcement.content = content;
+        announcement.targetAudience = Array.isArray(targetAudience) ? targetAudience : [targetAudience];
+        announcement.gradeLevel = gradeLevel || undefined;
+        announcement.priority = priority || 'Medium';
+        announcement.expiryDate = expiryDate || undefined;
+
+        await announcement.save();
+        await logEvent('announcement_updated', req.session.user.id, { 
+            announcementId: announcement._id, 
+            title, 
+            content, 
+            targetAudience, 
+            gradeLevel, 
+            priority, 
+            expiryDate 
+        });
+        
+        req.flash('info', ['Announcement updated successfully', 'success']);
+        res.redirect('/announcements');
+    } catch (error) {
+        console.error(error);
+        req.flash('info', ['Error updating announcement', 'danger']);
+        res.redirect(`/announcements/${req.params.id}/edit`);
+    }
+});
+
+// Delete announcement
+router.delete('/announcements/:id', isAuthenticated, async (req, res) => {
+    try {
+        const announcement = await Announcement.findById(req.params.id);
+        if (!announcement) {
+            return res.status(404).json({ success: false, message: 'Announcement not found' });
+        }
+
+        // Check if user has permission to delete
+        const user = req.session.user;
+        if (user.role !== 'admin' && 
+            (user.role !== 'teacher' || announcement.author.toString() !== user.id)) {
+            return res.status(403).json({ success: false, message: 'Permission denied' });
+        }
+
+        await Announcement.findByIdAndDelete(req.params.id);
+        await logEvent('announcement_deleted', req.session.user.id, { 
+            announcementId: req.params.id, 
+            title: announcement.title 
+        });
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting announcement:', error);
+        res.status(500).json({ success: false, message: 'Error deleting announcement' });
+    }
+});
+
+// Profile routes
+router.get('/profile', isAuthenticated, profileController.getProfile);
+router.post('/profile/update', isAuthenticated, profileController.updateProfile);
+router.post('/profile/change-password', isAuthenticated, profileController.changePassword);
+router.post('/profile/delete', isAuthenticated, profileController.deleteAccount);
+router.post('/profile/avatar', isAuthenticated, isTeacherOrAdmin, upload.single('avatar'), profileController.updateAvatar);
+
+router.get('/api/subjects/by-teacher/:teacherId', isAuthenticated, async (req, res) => {
+    try {
+        const subjects = await Subject.find({ teacherId: req.params.teacherId });
+        res.json(subjects);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch subjects' });
+    }
+});
+
+router.get('/api/parents/check', isAuthenticated, async (req, res) => {
+    try {
+        const { email } = req.query;
+        const parent = await Parent.findOne({ email });
+        if (parent) {
+            res.json({ exists: true, parent: { firstName: parent.firstName, lastName: parent.lastName } });
+        } else {
+            res.json({ exists: false });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+router.delete('/exams/:id', isAuthenticated, async (req, res) => {
+    try {
+        console.log('DELETE /exams/:id called', req.params.id, 'User:', req.session.user);
+        await Exam.findByIdAndDelete(req.params.id);
+        await logEvent('exam_deleted', req.session.user.id, { examId: req.params.id });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting exam:', error);
+        res.json({ success: false, message: 'Error deleting exam' });
+    }
+});
+
 router.get('/results/add', isAdminOrTeacher, async (req, res) => {
     try {
-        const students = await Student.find().sort({ firstName: 1, lastName: 1 });
-        console.log('Fetched students:', students.length, students[0]);
-        const exams = await Exam.find().populate('subject').sort({ date: -1 });
+        let students = [];
+        let exams = [];
+        let classes = [];
+        
+        if (req.session.user.role === 'teacher') {
+            // For teachers: only show their assigned classes, subjects, and students
+            const teacher = await Teacher.findOne({ teacherId: req.session.user.teacherId }).populate('subjects');
+            
+            if (!teacher) {
+                req.flash('info', ['Could not find your teacher profile.', 'danger']);
+                return res.redirect('/dashboard');
+            }
+            
+            // Get teacher's assigned classes
+            const assignedClasses = teacher.assignedClasses || [];
+            classes = assignedClasses.map(c => ({ gradeLevel: c.gradeLevel, section: c.section }));
+            
+            // Get students from teacher's assigned classes
+            if (assignedClasses.length > 0) {
+                const orConditions = assignedClasses.map(c => ({
+                    gradeLevel: c.gradeLevel.toString(),
+                    section: c.section
+                }));
+                students = await Student.find({ $or: orConditions }).sort({ firstName: 1, lastName: 1 });
+            }
+            
+            // Get exams for teacher's subjects
+            const teacherSubjectIds = teacher.subjects ? teacher.subjects.map(s => s._id) : [];
+            if (teacherSubjectIds.length > 0) {
+                exams = await Exam.find({ 
+                    subject: { $in: teacherSubjectIds },
+                    teacherId: teacher._id 
+                }).populate('subject').sort({ date: -1 });
+            }
+            
+            console.log('Teacher data:', {
+                teacherId: teacher.teacherId,
+                assignedClasses: assignedClasses.length,
+                subjects: teacherSubjectIds.length,
+                students: students.length,
+                exams: exams.length
+            });
+            
+        } else if (req.session.user.role === 'admin') {
+            // For admins: show all data
+            students = await Student.find().sort({ firstName: 1, lastName: 1 });
+            console.log('Fetched students:', students.length, students[0]);
+            exams = await Exam.find().populate('subject').sort({ date: -1 });
+            classes = await Class.find().sort({ gradeLevel: 1, section: 1 });
+        }
+        
+        console.log('Fetched students:', students.length);
+        console.log('Fetched exams:', exams.length);
+        if (exams.length > 0) {
+            console.log('First exam:', {
+                _id: exams[0]._id,
+                title: exams[0].title,
+                type: exams[0].type,
+                subject: exams[0].subject ? exams[0].subject.name : 'No subject',
+                date: exams[0].date
+            });
+        }
+        
         res.render('pages/results/add', {
             title: 'Add Result',
             students,
             exams,
+            classes,
             user: req.session.user,
             info: req.flash('info'),
-            errors: []
+            errors: [],
+            layout: false
         });
     } catch (error) {
         console.error(error);
-        req.flash('info', ['Error loading form data', 'danger']);
-        res.redirect('/results');
+        console.error("Error loading results page:", error);
+        req.flash('info', ['An error occurred while loading the page.', 'danger']);
+        res.redirect('/dashboard');
     }
 });
 
 router.post('/results/add', isAdminOrTeacher, async (req, res) => {
     try {
-        const { studentId, examId, marks } = req.body;
-        const result = new Grade({
-            studentId,
-            examId,
-            marks
+        const { studentId, examId, marksObtained, totalMarks, grade, remarks } = req.body;
+        
+        // Validate required fields
+        if (!studentId || !examId || !marksObtained || !totalMarks || !grade) {
+            req.flash('info', ['All required fields must be filled.', 'danger']);
+            return res.redirect('/results/add');
+        }
+        
+        // Validate marks
+        const marks = parseFloat(marksObtained);
+        const total = parseFloat(totalMarks);
+        if (marks < 0 || total <= 0 || marks > total) {
+            req.flash('info', ['Invalid marks. Marks obtained cannot exceed total marks.', 'danger']);
+            return res.redirect('/results/add');
+        }
+        
+        // Get student and exam details
+        const student = await Student.findById(studentId);
+        const exam = await Exam.findById(examId).populate('subject');
+        
+        if (!student || !exam) {
+            req.flash('info', ['Student or exam not found.', 'danger']);
+            return res.redirect('/results/add');
+        }
+        
+        // Check if result already exists for this student and exam
+        const existingResult = await Grade.findOne({ 
+            studentId: student.studentId, 
+            subject: exam.subject.name,
+            examType: exam.type 
         });
-        await result.save();
-        await logEvent('result_created', req.session.user.id, { resultId: result._id, studentId, examId, marks });
-        req.flash('info', ['Result added successfully', 'success']);
+        
+        if (existingResult) {
+            req.flash('info', ['A result for this student and exam already exists.', 'warning']);
+            return res.redirect('/results/add');
+        }
+        
+        // Create new result
+        const newResult = new Grade({
+            studentId: student.studentId,
+            subject: exam.subject.name,
+            examType: exam.type,
+            grade: grade,
+            marksObtained: marks,
+            totalMarks: total,
+            remarks: remarks || '',
+            examId: examId,
+            studentName: `${student.firstName} ${student.lastName}`,
+            examDate: exam.date
+        });
+        
+        await newResult.save();
+        
+        // Log the event
+        await logEvent('result_added', req.session.user.id, { 
+            studentId: student.studentId, 
+            examId: examId, 
+            subject: exam.subject.name,
+            grade: grade 
+        });
+        
+        req.flash('info', ['Result added successfully!', 'success']);
         res.redirect('/results');
+        
     } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error adding result', 'danger']);
+        console.error('Error adding result:', error);
+        req.flash('info', ['An error occurred while adding the result.', 'danger']);
         res.redirect('/results/add');
     }
 });
 
-router.get('/results/edit/:id', isAdminOrTeacher, async (req, res) => {
-    try {
-        const result = await Grade.findById(req.params.id);
-        if (!result) {
-            req.flash('info', ['Result not found', 'danger']);
-            return res.redirect('/results');
-        }
-        res.render('pages/results/edit', {
-            title: 'Edit Result',
-            user: req.session.user,
-            result,
-            info: req.flash('info'),
-            errors: []
-        });
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error loading result for edit', 'danger']);
-        res.redirect('/results');
-    }
-});
-
-router.post('/results/edit/:id', isAdminOrTeacher, async (req, res) => {
-    try {
-        const { marks } = req.body;
-        await Grade.findByIdAndUpdate(req.params.id, {
-            marks
-        });
-        await logEvent('result_updated', req.session.user.id, { resultId: req.params.id, changes: { marks } });
-        req.flash('info', ['Result updated successfully', 'success']);
-        res.redirect('/results');
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error updating result', 'danger']);
-        res.redirect(`/results/edit/${req.params.id}`);
-    }
-});
-
-router.delete('/results/:id', isAdminOrTeacher, async (req, res) => {
-    try {
-        await Grade.findByIdAndDelete(req.params.id);
-        await logEvent('result_deleted', req.session.user.id, { resultId: req.params.id });
-        res.json({ success: true });
-    } catch (error) {
-        console.error(error);
-        res.json({ success: false, message: 'Error deleting result' });
-    }
-});
-
-// Show edit form
-router.get('/students/edit/:id', isAdminOrTeacher, async (req, res) => {
-    try {
-        const student = await Student.findById(req.params.id);
-        if (!student) {
-            req.flash('info', ['Student not found', 'danger']);
-            return res.redirect('/students');
-        }
-        if (student.dateOfBirth && !(student.dateOfBirth instanceof Date)) {
-            student.dateOfBirth = new Date(student.dateOfBirth);
-        }
-        const classes = await Class.find();
-        const subjects = await Subject.find();
-        let parent = null;
-        if (student.parentEmail) {
-            parent = await Parent.findOne({ email: student.parentEmail });
-        }
-        res.render('pages/students/edit', { title: 'Edit Student', student, classes, parent, subjects });
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error loading student', 'danger']);
-        res.redirect('/students');
-    }
-});
-
-// Handle edit form submission
-router.post('/students/edit/:id', isAdminOrTeacher, async (req, res) => {
-    try {
-        const updateData = { ...req.body };
-        // If subjects is present, ensure it's an array
-        if (updateData.subjects && !Array.isArray(updateData.subjects)) {
-            updateData.subjects = [updateData.subjects];
-        }
-        await Student.findByIdAndUpdate(req.params.id, updateData);
-        await logEvent('student_updated', req.session.user.id, { studentId: req.params.id, changes: updateData });
-        req.flash('info', ['Student updated successfully', 'success']);
-        res.redirect('/students');
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error updating student', 'danger']);
-        res.redirect(`/students/edit/${req.params.id}`);
-    }
-});
-
-// Show single student
-router.get('/students/:id', isAdminOrTeacher, async (req, res) => {
-    try {
-        const student = await Student.findById(req.params.id).populate('subjects');
-        if (!student) {
-            req.flash('info', ['Student not found', 'danger']);
-            return res.redirect('/students');
-        }
-        let parent = null;
-        if (student.parentEmail) {
-            parent = await Parent.findOne({ email: student.parentEmail });
-        }
-        res.render('pages/students/show', { title: 'Student Details', student, parent });
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error loading student', 'danger']);
-        res.redirect('/students');
-    }
-});
-
-// Redirect /students/:id/edit to /students/edit/:id for robustness
-router.get('/students/:id/edit', (req, res) => {
-    res.redirect(`/students/edit/${req.params.id}`);
-});
-
-// Messages: Inbox for current user
-router.get('/messages', isAuthenticated, async (req, res) => {
-    try {
-        let messages = [];
-        if (req.session.user.role === 'teacher' || req.session.user.role === 'parent') {
-            messages = await Message.find({
-                $or: [
-                    { sender: req.session.user.id },
-                    { receiver: req.session.user.id }
-                ]
-            }).populate('sender').populate('receiver').sort({ createdAt: -1 });
-        }
-        res.render('pages/messages/index', {
-            title: 'Messages',
-            messages,
-            user: req.session.user,
-            info: req.flash('info'),
-            errors: []
-        });
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error loading messages', 'danger']);
-        res.redirect('/dashboard');
-    }
-});
-
-// Messages: Compose new message
-router.get('/messages/new', isAuthenticated, async (req, res) => {
-    try {
-        let parents = [];
-        if (req.session.user.role === 'teacher') {
-            parents = await Parent.find();
-        }
-        res.render('pages/messages/new', {
-            title: 'New Message',
-            parents,
-            user: req.session.user,
-            info: req.flash('info'),
-            errors: []
-        });
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error loading form', 'danger']);
-        res.redirect('/messages');
-    }
-});
-
-// Messages: Send message
-router.post('/messages', isAuthenticated, async (req, res) => {
-    try {
-        const { receiver, message } = req.body;
-        const msg = new Message({
-            sender: req.session.user.id,
-            receiver,
-            message
-        });
-        await msg.save();
-        req.flash('info', ['Message sent successfully', 'success']);
-        res.redirect('/messages');
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error sending message', 'danger']);
-        res.redirect('/messages/new');
-    }
-});
-
-// Messages: Reply form for parent or teacher
-router.get('/messages/reply/:id', isAuthenticated, async (req, res) => {
-    try {
-        const msg = await Message.findById(req.params.id).populate('sender').populate('receiver');
-        if (!msg) {
-            req.flash('info', ['Message not found', 'danger']);
-            return res.redirect('/messages');
-        }
-        // Always compare as strings
-        const receiverId = msg.receiver && (msg.receiver._id ? msg.receiver._id.toString() : msg.receiver.toString());
-        if (receiverId !== req.session.user.id.toString()) {
-            req.flash('info', ['Unauthorized', 'danger']);
-            return res.redirect('/messages');
-        }
-        res.render('pages/messages/reply', {
-            title: 'Reply to Message',
-            message: msg,
-            user: req.session.user,
-            info: req.flash('info'),
-            errors: []
-        });
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error loading reply form', 'danger']);
-        res.redirect('/messages');
-    }
-});
-
-// Messages: Send reply from parent or teacher
-router.post('/messages/reply/:id', isAuthenticated, async (req, res) => {
-    try {
-        const original = await Message.findById(req.params.id).populate('receiver');
-        if (!original) {
-            req.flash('info', ['Message not found', 'danger']);
-            return res.redirect('/messages');
-        }
-        const receiverId = original.receiver && (original.receiver._id ? original.receiver._id.toString() : original.receiver.toString());
-        if (receiverId !== req.session.user.id.toString()) {
-            req.flash('info', ['Unauthorized', 'danger']);
-            return res.redirect('/messages');
-        }
-        const { message } = req.body;
-        const reply = new Message({
-            sender: req.session.user.id,
-            receiver: original.sender,
-            message
-        });
-        await reply.save();
-        req.flash('info', ['Reply sent successfully', 'success']);
-        res.redirect('/messages');
-    } catch (error) {
-        console.error(error);
-        req.flash('info', ['Error sending reply', 'danger']);
-        res.redirect('/messages');
-    }
-});
-
-router.get("/admin", (req, res) => {
-    res.render("admin")
-})
-
-router.get('/registration-success', (req, res) => {
-  res.render('registration-success', {
-    studentId: req.query.studentId,
-    teacherId: req.query.teacherId
-  });
-});
-
-// Add Student form
-router.get('/students/create', isAdminOrTeacher, async (req, res) => {
-  try {
-    const classes = await Class.find();
-    res.render('pages/students/create', { classes });
-  } catch (error) {
-    console.error(error);
-    req.flash('info', ['Error loading form', 'danger']);
-    res.redirect('/students');
-  }
-});
-
-// Add Student POST
-router.post('/students/create', isAdminOrTeacher, async (req, res) => {
-  try {
-    const { firstName, lastName, dateOfBirth, gender, class: gradeLevel, section, address, guardianName, guardianRelation, guardianPhone, guardianEmail } = req.body;
-    // Validate gradeLevel
-    if (!gradeLevel || !['1','2','3','4'].includes(gradeLevel)) {
-      req.flash('info', ['Invalid form selected', 'danger']);
-      return res.redirect('/students');
-    }
-    // Generate unique studentId
-    const year = new Date().getFullYear();
-    const random = Math.floor(1000 + Math.random() * 9000);
-    const studentId = `F${gradeLevel}/${year}/${random}`;
-    // Generate random password
-    const plainPassword = Math.random().toString(36).slice(-8);
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(plainPassword, salt);
-    // Create student
-    await Student.create({
-      firstName,
-      lastName,
-      dateOfBirth,
-      gender,
-      gradeLevel,
-      section,
-      address,
-      parentEmail: guardianEmail,
-      studentId,
-      password: hashedPassword,
-      role: 'student'
-    });
-    // Log the event
-    await logEvent('student_created', req.session.user ? req.session.user.id : 'admin', {
-      studentId,
-      firstName,
-      lastName,
-      password: plainPassword,
-      gradeLevel,
-      section,
-      parentEmail: guardianEmail
-    });
-    // Redirect to students list with newStudentId and password in query
-    res.redirect(`/students?newStudentId=${encodeURIComponent(studentId)}&newStudentPassword=${encodeURIComponent(plainPassword)}`);
-  } catch (error) {
-    console.error(error);
-    req.flash('info', ['Error adding student', 'danger']);
-    res.redirect('/students');
-  }
-});
-
-// View system logs (admin only)
-router.get('/logs', isAdmin, async (req, res) => {
-  try {
-    const logs = await Log.find().sort({ createdAt: -1 }).limit(100);
-    res.render('pages/logs/index', { title: 'System Logs', logs });
-  } catch (error) {
-    console.error(error);
-    req.flash('info', ['Error loading logs', 'danger']);
-    res.redirect('/dashboard');
-  }
-});
-
-// Attendance Routes
 router.get('/attendance/take', isTeacher, async (req, res) => {
     try {
         const teacher = await Teacher.findOne({ teacherId: req.session.user.teacherId }).populate('subjects');
@@ -1301,11 +1582,15 @@ router.get('/attendance/take', isTeacher, async (req, res) => {
             title: 'Take Attendance',
             assignedClasses,
             subjects,
-            students: [], // Initially empty
-            selectedClass: null,
-            selectedSubject: null,
-            selectedDate: null
+            students: [],
+            selectedClass: '',
+            selectedSubject: '',
+            selectedDate: new Date().toISOString().split('T')[0],
+            user: req.session.user,
+            info: req.flash('info'),
+            layout: false
         });
+
     } catch (error) {
         console.error("Error loading attendance page:", error);
         req.flash('info', ['An error occurred while loading the page.', 'danger']);
@@ -1336,13 +1621,28 @@ router.get('/attendance/fetch-students', isTeacher, async (req, res) => {
             students,
             selectedClass: classInfo,
             selectedSubject: subjectId,
-            selectedDate: date
+            selectedDate: date,
+            layout: false
         });
 
     } catch (error) {
         console.error("Error fetching students for attendance:", error);
-        req.flash('info', ['An error occurred while fetching the student list.', 'danger']);
-        res.redirect('/attendance/take');
+        req.flash('info', ['Failed to fetch students.', 'danger']);
+        // Re-render the initial form with an error
+        const assignedClasses = await Class.find({ teacherId: req.session.user.id });
+        const subjects = await Subject.find({ teacherId: req.session.user.id });
+        res.render('pages/attendance/take', {
+            title: 'Take Attendance',
+            students: [],
+            assignedClasses,
+            subjects,
+            selectedClass: req.query.class,
+            selectedSubject: req.query.subject,
+            selectedDate: req.query.date,
+            info: req.flash('info'),
+            user: req.session.user,
+            layout: false
+        });
     }
 });
 
@@ -1352,7 +1652,7 @@ router.post('/attendance/submit', isTeacher, async (req, res) => {
         const [gradeLevel, section] = req.body.class.split('-');
         
         const teacher = await Teacher.findOne({ teacherId: req.session.user.teacherId });
-        const classObj = await Class.findOne({ gradeLevel, section });
+        const classObj = await Class.findOne({ gradeLevel: parseInt(gradeLevel), section });
 
         if (!teacher || !classObj) {
             req.flash('info', ['Required teacher or class information is missing.', 'danger']);
@@ -1382,6 +1682,50 @@ router.post('/attendance/submit', isTeacher, async (req, res) => {
         }
         res.redirect('/attendance/take');
     }
+});
+
+// Logs route - Admin only
+router.get('/logs', isAuthenticated, async (req, res) => {
+    try {
+        // Only allow admin access to logs
+        if (req.session.user.role !== 'admin') {
+            req.flash('info', ['Access denied. Admin privileges required.', 'danger']);
+            return res.redirect('/dashboard');
+        }
+
+        const Log = require('../models/log');
+        const logs = await Log.find()
+            .sort({ createdAt: -1 })
+            .limit(100); // Limit to recent 100 logs
+
+        // Format logs for display
+        const formattedLogs = logs.map(log => ({
+            ...log.toObject(),
+            user: log.user || 'System',
+            eventType: log.eventType,
+            details: log.details,
+            createdAt: log.createdAt
+        }));
+
+        res.render('pages/logs/index', {
+            title: 'System Logs',
+            logs: formattedLogs,
+            user: req.session.user,
+            info: req.flash('info'),
+            errors: [],
+            layout: false
+        });
+    } catch (error) {
+        console.error('Error loading logs:', error);
+        req.flash('info', ['Error loading system logs', 'danger']);
+        res.redirect('/dashboard');
+    }
+});
+
+// app routes
+router.use("/", (req, res, next) => {
+    res.locals.user = req.session.user;
+    next();
 });
 
 module.exports = router

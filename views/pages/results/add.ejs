@@ -1,60 +1,187 @@
-<form id="addResultForm" action="/results/add" method="POST">
-    <div class="row mb-3">
-        <div class="col-md-4">
-            <label for="classFilter" class="form-label">Form</label>
-            <select id="classFilter" class="form-select">
-                <option value="">All Forms</option>
-                <% if (classes && classes.length > 0) { %>
-                    <% Array.from(new Set(classes.map(c => c.gradeLevel))).forEach(form => { %>
-                        <option value="<%= form %>">Form <%= form %></option>
-                    <% }); %>
-                <% } %>
-            </select>
-        </div>
-        <div class="col-md-4">
-            <label for="sectionFilter" class="form-label">Section</label>
-            <select id="sectionFilter" class="form-select">
-                <option value="">All Sections</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-            </select>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Result - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light m-0 p-0">
+    <% if (typeof user !== 'undefined' && user) { %>
+        <!-- Offcanvas sidebar -->
+        <%- include('../../partials/offcanvas-sidebar') %>
+
+        <!-- Navbar for authenticated users -->
+        <%- include('../../partials/navbar') %>
+    <% } %>
+
+    <div class="container-fluid">
+        <div class="row">
+            <main class="col-12 p-4 main-content">
+                <form id="addResultForm" action="/results/add" method="POST">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="classFilter" class="form-label">Form</label>
+                            <select id="classFilter" class="form-select">
+                                <option value="">All Forms</option>
+                                <% if (classes && classes.length > 0) { %>
+                                    <% Array.from(new Set(classes.map(c => c.gradeLevel))).forEach(form => { %>
+                                        <option value="<%= form %>">Form <%= form %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sectionFilter" class="form-label">Section</label>
+                            <select id="sectionFilter" class="form-select">
+                                <option value="">All Sections</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="studentId" class="form-label">Student</label>
+                        <select name="studentId" id="studentId" class="form-select" required>
+                            <option value="">Select Student</option>
+                            <% if (students && students.length > 0) { %>
+                                <% students.forEach(student => { %>
+                                    <option value="<%= student._id %>" data-form="<%= student.gradeLevel %>" data-section="<%= student.section %>">
+                                        <%= student.firstName %> <%= student.lastName %> (<%= student.studentId %>) - Form <%= student.gradeLevel %> <%= student.section %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="examId" class="form-label">Exam</label>
+                        <select name="examId" id="examId" class="form-select" required>
+                            <option value="">Select Exam</option>
+                            <% if (exams && exams.length > 0) { %>
+                                <% exams.forEach(exam => { %>
+                                    <option value="<%= exam._id %>">
+                                        <%= exam.subject ? exam.subject.name : 'Unknown Subject' %> - <%= exam.type %> (<%= new Date(exam.date).toLocaleDateString() %>)
+                                    </option>
+                                <% }) %>
+                            <% } else { %>
+                                <option value="" disabled>No exams available</option>
+                            <% } %>
+                        </select>
+                        <% if (exams && exams.length === 0) { %>
+                            <small class="text-muted">No exams have been created yet. Please create exams first.</small>
+                        <% } %>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="marksObtained" class="form-label">Marks Obtained</label>
+                                <input type="number" name="marksObtained" id="marksObtained" class="form-control" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="totalMarks" class="form-label">Total Marks</label>
+                                <input type="number" name="totalMarks" id="totalMarks" class="form-control" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="grade" class="form-label">Grade</label>
+                        <select name="grade" id="grade" class="form-select" required>
+                            <option value="">Select Grade</option>
+                            <option value="A+">A+ (90-100%)</option>
+                            <option value="A">A (80-89%)</option>
+                            <option value="B+">B+ (70-79%)</option>
+                            <option value="B">B (60-69%)</option>
+                            <option value="C+">C+ (50-59%)</option>
+                            <option value="C">C (40-49%)</option>
+                            <option value="D">D (30-39%)</option>
+                            <option value="F">F (Below 30%)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="remarks" class="form-label">Remarks</label>
+                        <textarea name="remarks" id="remarks" class="form-control" rows="3" placeholder="Optional remarks about the result"></textarea>
+                    </div>
+                    
+                    <!-- Other form fields for exam, marks, etc. -->
+                    <button type="submit" class="btn btn-primary">Add Result</button>
+                </form>
+                <script>
+                    const classFilter = document.getElementById('classFilter');
+                    const sectionFilter = document.getElementById('sectionFilter');
+                    const studentSelect = document.getElementById('studentId');
+                    function filterStudents() {
+                        const form = classFilter.value;
+                        const section = sectionFilter.value;
+                        Array.from(studentSelect.options).forEach(option => {
+                            if (!option.value) return; // skip placeholder
+                            const matchesForm = !form || option.getAttribute('data-form') === form;
+                            const matchesSection = !section || option.getAttribute('data-section') === section;
+                            option.style.display = (matchesForm && matchesSection) ? '' : 'none';
+                        });
+                        // Optionally reset selection if filtered out
+                        if (studentSelect.selectedIndex > 0 && studentSelect.options[studentSelect.selectedIndex].style.display === 'none') {
+                            studentSelect.selectedIndex = 0;
+                        }
+                    }
+                    classFilter.addEventListener('change', filterStudents);
+                    sectionFilter.addEventListener('change', filterStudents);
+                    
+                    // Auto-calculate grade based on percentage
+                    const marksObtainedInput = document.getElementById('marksObtained');
+                    const totalMarksInput = document.getElementById('totalMarks');
+                    const gradeSelect = document.getElementById('grade');
+                    
+                    function calculateGrade() {
+                        const marks = parseFloat(marksObtainedInput.value) || 0;
+                        const total = parseFloat(totalMarksInput.value) || 0;
+                        
+                        if (total > 0) {
+                            const percentage = (marks / total) * 100;
+                            let grade = '';
+                            
+                            if (percentage >= 90) grade = 'A+';
+                            else if (percentage >= 80) grade = 'A';
+                            else if (percentage >= 70) grade = 'B+';
+                            else if (percentage >= 60) grade = 'B';
+                            else if (percentage >= 50) grade = 'C+';
+                            else if (percentage >= 40) grade = 'C';
+                            else if (percentage >= 30) grade = 'D';
+                            else grade = 'F';
+                            
+                            gradeSelect.value = grade;
+                        }
+                    }
+                    
+                    marksObtainedInput.addEventListener('input', calculateGrade);
+                    totalMarksInput.addEventListener('input', calculateGrade);
+                </script>
+            </main>
         </div>
     </div>
-    <div class="mb-3">
-        <label for="studentId" class="form-label">Student</label>
-        <select name="studentId" id="studentId" class="form-select" required>
-            <option value="">Select Student</option>
-            <% if (students && students.length > 0) { %>
-                <% students.forEach(student => { %>
-                    <option value="<%= student._id %>" data-form="<%= student.gradeLevel %>" data-section="<%= student.section %>">
-                        <%= student.firstName %> <%= student.lastName %> (<%= student.studentId %>) - Form <%= student.gradeLevel %> <%= student.section %>
-                    </option>
-                <% }) %>
-            <% } %>
-        </select>
-    </div>
-    <!-- Other form fields for exam, marks, etc. -->
-    <button type="submit" class="btn btn-primary">Add Result</button>
-</form>
-<script>
-    const classFilter = document.getElementById('classFilter');
-    const sectionFilter = document.getElementById('sectionFilter');
-    const studentSelect = document.getElementById('studentId');
-    function filterStudents() {
-        const form = classFilter.value;
-        const section = sectionFilter.value;
-        Array.from(studentSelect.options).forEach(option => {
-            if (!option.value) return; // skip placeholder
-            const matchesForm = !form || option.getAttribute('data-form') === form;
-            const matchesSection = !section || option.getAttribute('data-section') === section;
-            option.style.display = (matchesForm && matchesSection) ? '' : 'none';
-        });
-        // Optionally reset selection if filtered out
-        if (studentSelect.selectedIndex > 0 && studentSelect.options[studentSelect.selectedIndex].style.display === 'none') {
-            studentSelect.selectedIndex = 0;
-        }
-    }
-    classFilter.addEventListener('change', filterStudents);
-    sectionFilter.addEventListener('change', filterStudents);
-</script> 
+
+    <!-- Bootstrap 5.3.2 Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (if needed) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="/js/main.js"></script>
+</body>
+</html> 

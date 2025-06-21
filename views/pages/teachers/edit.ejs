@@ -1,85 +1,198 @@
-<%- include('../../partials/messages') %>
-
-<div class="container-fluid py-4">
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">Edit Teacher</h2>
-        <a href="/teachers" class="btn btn-outline-secondary">
-          <img src="/class.png" alt="Back" style="width: 20px; height: 20px;" class="me-2">
-          Back to List
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-md-6 mx-auto">
-      <div class="card">
-        <div class="card-header">
-          <h4 class="card-title mb-0">Edit Teacher Information</h4>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Teacher - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Top Navbar with toggler -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
+            </a>
         </div>
-        <div class="card-body">
-          <form action="/teachers/edit/<%= teacher._id %>" method="POST">
-            <div class="mb-3">
-              <label class="form-label">First Name</label>
-              <input type="text" name="firstName" class="form-control" value="<%= teacher.firstName %>" required>
+    </nav>
+
+    <!-- Offcanvas Sidebar -->
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <!-- Flash Messages -->
+        <% if (typeof info !== 'undefined' && info.length > 0) { %>
+            <div class="alert alert-<%= info[1] || 'info' %> alert-dismissible fade show" role="alert">
+                <%= info[0] %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Last Name</label>
-              <input type="text" name="lastName" class="form-control" value="<%= teacher.lastName %>" required>
+        <% } %>
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">Edit Teacher</h1>
+                    <div class="action-buttons d-flex gap-2">
+                        <a href="/teachers" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Teachers
+                        </a>
+                        <a href="/teachers/<%= teacher._id %>" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label">Email</label>
-              <input type="email" name="email" class="form-control" value="<%= teacher.email %>" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Subjects (max 3)</label>
-              <select name="subjects" class="form-select" multiple size="6" onchange="limitSubjects(this)">
-                <% if (subjects && subjects.length > 0) { %>
-                  <% subjects.forEach(function(subject) { %>
-                    <option value="<%= subject._id %>"
-                      <%= teacher.subjects && teacher.subjects.map(String).includes(String(subject._id)) ? 'selected' : '' %>>
-                      <%= subject.name %> (<%= subject.code %>)
-                    </option>
-                  <% }); %>
-                <% } %>
-              </select>
-              <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple subjects.</small>
-              <div id="subjectLimitWarning" class="text-danger mt-2" style="display:none;">You can select up to 3 subjects only.</div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label"><strong>Assign Class & Section(s)</strong></label>
-              <select name="assignedClasses" class="form-select" multiple size="6">
-                <% ['1','2','3','4'].forEach(function(form) { %>
-                  <% ['A','B','C'].forEach(function(section) { %>
-                    <% const assigned = teacher.assignedClasses && teacher.assignedClasses.some(ac => ac.gradeLevel === form && ac.section === section); %>
-                    <option value="<%= form %>-<%= section %>" <%= assigned ? 'selected' : '' %>>Form <%= form %> - Section <%= section %></option>
-                  <% }); %>
-                <% }); %>
-              </select>
-              <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple class-section pairs.</small>
-            </div>
-            <div class="d-flex justify-content-between">
-              <a href="/teachers" class="btn btn-secondary">Cancel</a>
-              <button type="submit" class="btn btn-primary">Update Teacher</button>
-            </div>
-          </form>
         </div>
-      </div>
+
+        <!-- Edit Teacher Form -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Edit Teacher Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <form action="/teachers/edit/<%= teacher._id %>" method="POST" class="needs-validation" novalidate>
+                            <!-- Personal Information -->
+                            <div class="mb-4">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-user me-2"></i>Personal Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">First Name *</label>
+                                        <input type="text" name="firstName" class="form-control" value="<%= teacher.firstName %>" required>
+                                        <div class="invalid-feedback">Please provide a first name.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Last Name *</label>
+                                        <input type="text" name="lastName" class="form-control" value="<%= teacher.lastName %>" required>
+                                        <div class="invalid-feedback">Please provide a last name.</div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">Email *</label>
+                                        <input type="email" name="email" class="form-control" value="<%= teacher.email %>" required>
+                                        <div class="invalid-feedback">Please provide a valid email address.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subjects -->
+                            <div class="mb-4">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-book me-2"></i>Subjects (Max 3)
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Assign Subjects</label>
+                                        <select name="subjects" class="form-select" multiple size="6" onchange="limitSubjects(this)">
+                                            <% if (subjects && subjects.length > 0) { %>
+                                                <% subjects.forEach(function(subject) { %>
+                                                    <option value="<%= subject._id %>"
+                                                        <%= teacher.subjects && teacher.subjects.map(String).includes(String(subject._id)) ? 'selected' : '' %>>
+                                                        <%= subject.name %> (<%= subject.code %>)
+                                                    </option>
+                                                <% }); %>
+                                            <% } %>
+                                        </select>
+                                        <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple subjects.</small>
+                                        <div id="subjectLimitWarning" class="text-danger mt-2" style="display:none;">You can select up to 3 subjects only.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Assigned Classes -->
+                            <div class="mb-4">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-chalkboard me-2"></i>Assigned Classes & Sections
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Assign Class & Section(s)</label>
+                                        <select name="assignedClasses" class="form-select" multiple size="6">
+                                            <% ['1','2','3','4'].forEach(function(form) { %>
+                                                <% ['A','B','C'].forEach(function(section) { %>
+                                                    <% const assigned = teacher.assignedClasses && teacher.assignedClasses.some(ac => ac.gradeLevel === form && ac.section === section); %>
+                                                    <option value="<%= form %>-<%= section %>" <%= assigned ? 'selected' : '' %>>Grade <%= form %> - Section <%= section %></option>
+                                                <% }); %>
+                                            <% }); %>
+                                        </select>
+                                        <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple class-section pairs.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-between pt-3 border-top">
+                                <a href="/teachers" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Teacher
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
-<script>
-function limitSubjects(select) {
-  const max = 3;
-  const warning = document.getElementById('subjectLimitWarning');
-  if (select.selectedOptions.length > max) {
-    warning.style.display = 'block';
-    // Deselect the last selected option
-    select.selectedOptions[max].selected = false;
-  } else {
-    warning.style.display = 'none';
-  }
-}
-</script> 
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Form Validation and Subject Limit Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form validation
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+
+            // Add active class to current navigation link
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (currentPath.startsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        function limitSubjects(select) {
+            const max = 3;
+            const warning = document.getElementById('subjectLimitWarning');
+            if (select.selectedOptions.length > max) {
+                warning.style.display = 'block';
+                // Deselect the last selected option
+                select.selectedOptions[max].selected = false;
+            } else {
+                warning.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html> 

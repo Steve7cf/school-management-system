@@ -45,7 +45,47 @@ const subjectSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index for efficient queries
+// Indexes for efficient queries
 subjectSchema.index({ code: 1, gradeLevel: 1 });
+subjectSchema.index({ isActive: 1 }); // Index for active subjects
+
+// Pre-save middleware to validate teacher assignment
+subjectSchema.pre('save', async function(next) {
+    if (this.teacherId) {
+        const Teacher = mongoose.model('Teacher');
+        const teacher = await Teacher.findById(this.teacherId);
+        if (!teacher) {
+            return next(new Error('Assigned teacher does not exist'));
+        }
+    }
+    next();
+});
+
+// Static method to get subjects by teacher
+subjectSchema.statics.findByTeacher = function(teacherId) {
+    return this.find({ teacherId, isActive: true }).populate('teacherId');
+};
+
+// Instance method to assign teacher
+subjectSchema.methods.assignTeacher = async function(teacherId) {
+    const Teacher = mongoose.model('Teacher');
+    
+    // Remove from old teacher if exists
+    if (this.teacherId) {
+        await Teacher.findByIdAndUpdate(this.teacherId, {
+            $pull: { subjects: this._id }
+        });
+    }
+    
+    // Assign to new teacher
+    this.teacherId = teacherId;
+    if (teacherId) {
+        await Teacher.findByIdAndUpdate(teacherId, {
+            $addToSet: { subjects: this._id }
+        });
+    }
+    
+    return this.save();
+};
 
 module.exports = mongoose.model('Subject', subjectSchema); 

@@ -1,119 +1,251 @@
-<!-- Create Student Page -->
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-md-8 mx-auto">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Add New Student</h4>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Student - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <!-- Top Navbar with toggler -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Offcanvas Sidebar -->
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <!-- Flash Messages -->
+        <% if (typeof info !== 'undefined' && info.length > 0) { %>
+            <div class="alert alert-<%= info[1] || 'info' %> alert-dismissible fade show" role="alert">
+                <%= info[0] %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">Add New Student</h1>
+                    <a href="/students" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Students
+                    </a>
                 </div>
-                <div class="card-body">
-                    <form action="/students/create" method="POST">
-                        <!-- Personal Information -->
-                        <div class="mb-4">
-                            <h5 class="text-primary">Personal Information</h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">First Name</label>
-                                    <input type="text" name="firstName" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Last Name</label>
-                                    <input type="text" name="lastName" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Date of Birth</label>
-                                    <input type="date" name="dateOfBirth" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Gender</label>
-                                    <select name="gender" class="form-select" required>
-                                        <option value="">Select Gender</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                    </select>
+            </div>
+        </div>
+
+        <!-- Create Student Form -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Student Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <form action="/students/create" method="POST" class="needs-validation" novalidate>
+                            <!-- Personal Information -->
+                            <div class="mb-4">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-user me-2"></i>Personal Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">First Name *</label>
+                                        <input type="text" name="firstName" class="form-control" required>
+                                        <div class="invalid-feedback">Please provide a first name.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Last Name *</label>
+                                        <input type="text" name="lastName" class="form-control" required>
+                                        <div class="invalid-feedback">Please provide a last name.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Date of Birth *</label>
+                                        <input type="date" name="dateOfBirth" class="form-control" required>
+                                        <div class="invalid-feedback">Please provide a date of birth.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Gender *</label>
+                                        <select name="gender" class="form-select" required>
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                        <div class="invalid-feedback">Please select a gender.</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Academic Information -->
-                        <div class="mb-4">
-                            <h5 class="text-primary">Academic Information</h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Admission Number</label>
-                                    <input type="text" name="studentId" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Class</label>
-                                    <select name="class" class="form-select" required>
-                                        <option value="">Select Class</option>
-                                        <% if (classes && classes.length > 0) { %>
-                                            <% classes.forEach(classItem => { %>
-                                                <option value="<%= classItem._id %>">
-                                                    <%= classItem.name %> <%= classItem.section %>
-                                                </option>
-                                            <% }); %>
-                                        <% } %>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Section</label>
-                                    <select name="section" class="form-select" required>
-                                        <option value="">Select Section</option>
-                                        <option value="A">A</option>
-                                        <option value="B">B</option>
-                                        <option value="C">C</option>
-                                    </select>
+                            <!-- Academic Information -->
+                            <div class="mb-4">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-graduation-cap me-2"></i>Academic Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label class="form-label">Class *</label>
+                                        <select name="class" class="form-select" required>
+                                            <option value="">Select Class</option>
+                                            <% if (classes && classes.length > 0) { %>
+                                                <% classes.forEach(classItem => { %>
+                                                    <option value="<%= classItem.gradeLevel %>-<%= classItem.section %>">
+                                                        Grade <%= classItem.gradeLevel %> - Section <%= classItem.section %>
+                                                    </option>
+                                                <% }); %>
+                                            <% } %>
+                                        </select>
+                                        <div class="invalid-feedback">Please select a class.</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Contact Information -->
-                        <div class="mb-4">
-                            <h5 class="text-primary">Contact Information</h5>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label">Address</label>
-                                    <textarea name="address" class="form-control" rows="3"><%= student && student.address ? student.address : '' %></textarea>
+                            <!-- Contact Information -->
+                            <div class="mb-4">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Contact Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Address</label>
+                                        <textarea name="address" class="form-control" rows="3" placeholder="Enter student's address"></textarea>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Parent/Guardian Information -->
-                        <div class="mb-4">
-                            <h5 class="text-primary">Parent/Guardian Information</h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Parent/Guardian Name</label>
-                                    <input type="text" name="guardianName" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Relationship</label>
-                                    <select name="guardianRelation" class="form-select" required>
-                                        <option value="">Select Relationship</option>
-                                        <option value="Father">Father</option>
-                                        <option value="Mother">Mother</option>
-                                        <option value="Guardian">Guardian</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Parent/Guardian Phone</label>
-                                    <input type="tel" name="guardianPhone" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Parent/Guardian Email</label>
-                                    <input type="email" name="guardianEmail" class="form-control">
+                            <!-- Parent/Guardian Information -->
+                            <div class="mb-4">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-users me-2"></i>Parent/Guardian Information
+                                </h5>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Parent/Guardian Email *</label>
+                                        <input type="email" id="parentEmail" name="parentEmail" class="form-control" required>
+                                        <div class="invalid-feedback">Please provide a valid email address.</div>
+                                        <div id="parent-info" class="mt-2" style="display: none;">
+                                            <span class="badge bg-success">Parent Found</span> <span id="parent-name"></span>
+                                        </div>
+                                    </div>
+                                    <div id="new-parent-details" class="col-12" style="display: none;">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Parent First Name *</label>
+                                                <input type="text" name="parentFirstName" class="form-control">
+                                                <div class="invalid-feedback">Please provide parent's first name.</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Parent Last Name *</label>
+                                                <input type="text" name="parentLastName" class="form-control">
+                                                <div class="invalid-feedback">Please provide parent's last name.</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Parent Phone *</label>
+                                                <input type="tel" name="parentPhone" class="form-control">
+                                                <div class="invalid-feedback">Please provide parent's phone number.</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="d-flex justify-content-between">
-                            <a href="/students" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Add Student</button>
-                        </div>
-                    </form>
+                            <!-- Form Actions -->
+                            <div class="d-flex justify-content-between pt-3 border-top">
+                                <a href="/students" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Add Student
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div> 
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Form Validation and Parent Check Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form validation
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+
+            // Parent email check
+            document.getElementById('parentEmail').addEventListener('blur', async function() {
+                const email = this.value;
+                if (!email) return;
+
+                try {
+                    const response = await fetch(`/api/parents/check?email=${email}`);
+                    const data = await response.json();
+                    
+                    const parentInfoDiv = document.getElementById('parent-info');
+                    const newParentDetailsDiv = document.getElementById('new-parent-details');
+
+                    if (data.exists) {
+                        parentInfoDiv.style.display = 'block';
+                        document.getElementById('parent-name').textContent = `${data.parent.firstName} ${data.parent.lastName}`;
+                        newParentDetailsDiv.style.display = 'none';
+                        // Clear and disable new parent fields
+                        newParentDetailsDiv.querySelectorAll('input').forEach(input => {
+                            input.value = '';
+                            input.required = false;
+                        });
+                    } else {
+                        parentInfoDiv.style.display = 'none';
+                        newParentDetailsDiv.style.display = 'block';
+                        // Enable required validation for new parent fields
+                        newParentDetailsDiv.querySelectorAll('input').forEach(input => {
+                            input.required = true;
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error checking parent:', error);
+                }
+            });
+
+            // Add active class to current navigation link
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (currentPath.startsWith(link.getAttribute('href'))) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

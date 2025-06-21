@@ -1,82 +1,107 @@
+const express = require('express');
 const Student = require('../models/student');
 const Teacher = require('../models/teacher');
+const Admin = require('../models/admin');
 const Parent = require('../models/parent');
 const Class = require('../models/Class');
 const Subject = require('../models/Subject');
 const Exam = require('../models/Exam');
 const Announcement = require('../models/Announcement');
 const Attendance = require('../models/Attendance');
+const Log = require('../models/log');
 
 // Main dashboard controller - redirects based on user role
-const index = async (req, res) => {
-  try {
-    const user = req.session.user;
-    
-    switch (user.role) {
-      case 'student':
-        return res.redirect('/dashboard/student');
-      case 'teacher':
-        return res.redirect('/dashboard/teacher');
-      case 'parent':
-        return res.redirect('/dashboard/parent');
-      case 'admin':
-        return res.redirect('/dashboard/admin');
-      default:
-        req.flash('info', ['Invalid user role', 'danger']);
-        return res.redirect('/login');
+exports.index = async (req, res) => {
+    try {
+        const user = req.session.user;
+        
+        // Redirect based on user role
+        switch (user.role) {
+            case 'admin':
+                return res.redirect('/dashboard/admin');
+            case 'teacher':
+                return res.redirect('/dashboard/teacher');
+            case 'student':
+                return res.redirect('/dashboard/student');
+            case 'parent':
+                return res.redirect('/dashboard/parent');
+            default:
+                req.flash('info', ['Unknown user role', 'danger']);
+                return res.redirect('/login');
+        }
+    } catch (error) {
+        console.error('Error in dashboard redirect:', error);
+        req.flash('info', ['Error loading dashboard', 'danger']);
+        res.redirect('/login');
     }
-  } catch (error) {
-    console.error(error);
-    req.flash('info', ['Error loading dashboard', 'danger']);
-    res.redirect('/login');
-  }
 };
 
 // Admin dashboard controller
-const adminDashboard = async (req, res) => {
-  try {
-    const totalStudents = await Student.countDocuments();
-    const totalTeachers = await Teacher.countDocuments();
-    const totalClasses = await Class.countDocuments();
-    const totalSubjects = await Subject.countDocuments();
-    const recentAnnouncements = await Announcement.find()
-      .sort({ createdAt: -1 })
-      .limit(5);
-    const upcomingExamsCount = await Exam.countDocuments({ date: { $gte: new Date() } });
+exports.adminDashboard = async (req, res) => {
+    try {
+        const totalStudents = await Student.countDocuments();
+        const totalTeachers = await Teacher.countDocuments();
+        const totalClasses = await Class.countDocuments();
+        const totalSubjects = await Subject.countDocuments();
+        const upcomingExamsCount = await Exam.countDocuments({ date: { $gte: new Date() } });
 
-    const data = {
-      totalStudents,
-      totalTeachers,
-      totalClasses,
-      totalSubjects,
-      recentAnnouncements,
-      upcomingExamsCount
-    };
+        // Fetch recent announcements
+        const recentAnnouncements = await Announcement.find()
+            .sort({ createdAt: -1 })
+            .limit(5);
 
-    res.render('pages/dashboard/admin', {
-      user: req.session.user,
-      data,
-      info: req.flash('info'),
-      errors: []
-    });
-  } catch (error) {
-    console.error(error);
-    req.flash('info', ['Error loading dashboard', 'danger']);
-    res.redirect('/login');
-  }
+        // Fetch recent activities from logs
+        const recentActivities = await Log.find().sort({ createdAt: -1 }).limit(10);
+        
+        const data = {
+            totalStudents,
+            totalTeachers,
+            totalClasses,
+            totalSubjects,
+            upcomingExamsCount,
+            recentAnnouncements,
+            recentActivities
+        };
+        
+        res.render('pages/dashboard/admin', {
+            title: 'Admin Dashboard',
+            user: req.session.user,
+            data
+        });
+    } catch (error) {
+        console.error('Error loading admin dashboard:', error);
+        res.status(500).send('Error loading dashboard');
+    }
 };
 
 // Helper function to get student dashboard data
 async function getStudentDashboardData(studentId) {
-  const student = await Student.findOne({ studentId });
-  const studentClass = await Class.findOne({ gradeLevel: student.gradeLevel, section: student.section });
-  const subjects = await Subject.find({ gradeLevel: student.gradeLevel });
-  const upcomingExams = await Exam.find({
-    gradeLevel: student.gradeLevel,
-    section: student.section,
-    date: { $gte: new Date() }
-  }).sort({ date: 1 }).limit(5);
-  const recentAnnouncements = await Announcement.find()
+  const student = await Student.findOne({ studentId }).populate('subjects');
+  const studentClass = await Class.findOne({ gradeLevel: parseInt(student.gradeLevel), section: student.section });
+  
+  const examQuery = {
+      date: { $gte: new Date() },
+      $or: [
+          { targetClasses: { $size: 0 } },
+          { targetClasses: { $exists: false } }
+      ]
+  };
+  if (studentClass) {
+      examQuery.$or.push({ targetClasses: studentClass._id });
+  }
+
+  const upcomingExams = await Exam.find(examQuery).populate('subject').sort({ date: 1 }).limit(5);
+  
+  let announcementQuery = {
+    $or: [
+        { targetClasses: { $exists: false } },
+        { targetClasses: { $size: 0 } }
+    ]
+  };
+  if (studentClass) {
+      announcementQuery.$or.push({ targetClasses: studentClass._id });
+  }
+  const recentAnnouncements = await Announcement.find(announcementQuery)
     .sort({ createdAt: -1 })
     .limit(5);
 
@@ -90,7 +115,7 @@ async function getStudentDashboardData(studentId) {
 
   return {
     className: `Grade ${student.gradeLevel} - Section ${student.section}`,
-    subjectCount: subjects.length,
+    subjectCount: student.subjects ? student.subjects.length : 0,
     upcomingExamsCount: upcomingExams.length,
     attendanceRate,
     upcomingExams,
@@ -100,28 +125,40 @@ async function getStudentDashboardData(studentId) {
 
 // Helper function to get teacher dashboard data
 async function getTeacherDashboardData(teacherId) {
-  const teacher = await Teacher.findOne({ teacherId }).populate('subjects');
-  const teacherClasses = await Class.find({ teacherId: teacher._id });
-  // Dynamically count students in all classes taught by this teacher
+  const teacher = await Teacher.findOne({ teacherId: teacherId }).populate('subjects');
+  
+  // Count students based on teacher's assigned classes
   let studentCount = 0;
-  if (teacherClasses.length > 0) {
-    const orConditions = teacherClasses.map(c => ({
+  if (teacher && teacher.assignedClasses && teacher.assignedClasses.length > 0) {
+    const orConditions = teacher.assignedClasses.map(c => ({
       gradeLevel: c.gradeLevel.toString(), // student.gradeLevel is string
       section: c.section
     }));
     studentCount = await Student.countDocuments({ $or: orConditions });
   }
+  
   const upcomingExams = await Exam.find({
     teacherId: teacher._id,
     date: { $gte: new Date() }
   }).sort({ date: 1 }).limit(5);
-  const recentAnnouncements = await Announcement.find()
+
+  let announcementQuery = {
+      $or: [
+          { targetClasses: { $exists: false } },
+          { targetClasses: { $size: 0 } }
+      ]
+  };
+  if (teacher && teacher.assignedClasses && teacher.assignedClasses.length > 0) {
+      const classIds = teacher.assignedClasses.map(c => c._id);
+      announcementQuery.$or.push({ targetClasses: { $in: classIds } });
+  }
+  const recentAnnouncements = await Announcement.find(announcementQuery)
     .sort({ createdAt: -1 })
     .limit(5);
 
   return {
     subjects: teacher.subjects || [],
-    classCount: teacherClasses.length,
+    classCount: teacher.assignedClasses ? teacher.assignedClasses.length : 0,
     studentCount,
     upcomingExamsCount: upcomingExams.length,
     upcomingExams,
@@ -132,12 +169,31 @@ async function getTeacherDashboardData(teacherId) {
 // Helper function to get parent dashboard data
 async function getParentDashboardData(studentId) {
   const student = await Student.findOne({ studentId });
-  const studentClass = await Class.findOne({ gradeLevel: student.gradeLevel });
-  const upcomingExams = await Exam.find({
-    gradeLevel: student.gradeLevel,
-    date: { $gte: new Date() }
-  }).sort({ date: 1 }).limit(5);
-  const recentAnnouncements = await Announcement.find()
+  const studentClass = await Class.findOne({ gradeLevel: parseInt(student.gradeLevel), section: student.section });
+  
+  const examQuery = {
+      date: { $gte: new Date() },
+      $or: [
+          { targetClasses: { $size: 0 } },
+          { targetClasses: { $exists: false } }
+      ]
+  };
+  if (studentClass) {
+      examQuery.$or.push({ targetClasses: studentClass._id });
+  }
+
+  const upcomingExams = await Exam.find(examQuery).populate('subject').sort({ date: 1 }).limit(5);
+
+  let announcementQuery = {
+      $or: [
+          { targetClasses: { $exists: false } },
+          { targetClasses: { $size: 0 } }
+      ]
+  };
+  if (studentClass) {
+      announcementQuery.$or.push({ targetClasses: studentClass._id });
+  }
+  const recentAnnouncements = await Announcement.find(announcementQuery)
     .sort({ createdAt: -1 })
     .limit(5);
 
@@ -162,85 +218,49 @@ async function getParentDashboardData(studentId) {
 }
 
 // Student dashboard controller
-const studentDashboard = async (req, res) => {
-  try {
-    const data = await getStudentDashboardData(req.session.user.studentId);
-    res.render('pages/dashboard/student', {
-      user: req.session.user,
-      data,
-      info: req.flash('info'),
-      errors: []
-    });
-  } catch (error) {
-    console.error(error);
-    req.flash('info', ['Error loading dashboard', 'danger']);
-    res.redirect('/login');
-  }
+exports.studentDashboard = async (req, res) => {
+    try {
+        const data = await getStudentDashboardData(req.session.user.studentId);
+        
+        res.render('pages/dashboard/student', {
+            title: 'Student Dashboard',
+            user: req.session.user,
+            data
+        });
+    } catch (error) {
+        console.error('Error loading student dashboard:', error);
+        res.status(500).send('Error loading dashboard');
+    }
 };
 
 // Teacher dashboard controller
-const teacherDashboard = async (req, res) => {
-  try {
-    const data = await getTeacherDashboardData(req.session.user.teacherId);
-    res.render('pages/dashboard/teacher', {
-      user: req.session.user,
-      data,
-      info: req.flash('info'),
-      errors: []
-    });
-  } catch (error) {
-    console.error(error);
-    req.flash('info', ['Error loading dashboard', 'danger']);
-    res.redirect('/login');
-  }
+exports.teacherDashboard = async (req, res) => {
+    try {
+        const data = await getTeacherDashboardData(req.session.user.teacherId);
+        
+        res.render('pages/dashboard/teacher', {
+            title: 'Teacher Dashboard',
+            user: req.session.user,
+            data
+        });
+    } catch (error) {
+        console.error('Error loading teacher dashboard:', error);
+        res.status(500).send('Error loading dashboard');
+    }
 };
 
 // Parent dashboard controller
-const parentDashboard = async (req, res) => {
-  try {
-    const parent = req.session.user;
-    const student = await Student.findOne({ studentId: parent.studentId });
-
-    let upcomingExamsCount = 0;
-    let announcementsCount = 0;
-
-    if (student) {
-      // Count upcoming exams for the student's grade level
-      upcomingExamsCount = await Exam.countDocuments({
-        gradeLevel: student.gradeLevel,
-        date: { $gte: new Date() }
-      });
-
-      // Count active announcements for parents or all
-      announcementsCount = await Announcement.countDocuments({
-        isActive: true,
-        $or: [
-          { targetAudience: 'All' },
-          { targetAudience: 'Parents' },
-          { targetAudience: 'Students' }
-        ]
-      });
+exports.parentDashboard = async (req, res) => {
+    try {
+        const data = await getParentDashboardData(req.session.user.studentId);
+        
+        res.render('pages/dashboard/parent', {
+            title: 'Parent Dashboard',
+            user: req.session.user,
+            data
+        });
+    } catch (error) {
+        console.error('Error loading parent dashboard:', error);
+        res.status(500).send('Error loading dashboard');
     }
-
-    res.render('pages/dashboard/parent', {
-      user: parent,
-      student,
-      upcomingExamsCount,
-      announcementsCount,
-      info: req.flash('info'),
-      errors: []
-    });
-  } catch (error) {
-    console.error(error);
-    req.flash('info', ['Error loading dashboard', 'danger']);
-    res.redirect('/login');
-  }
-};
-
-module.exports = {
-  index,
-  adminDashboard,
-  studentDashboard,
-  teacherDashboard,
-  parentDashboard
 }; 
