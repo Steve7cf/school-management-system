@@ -64,6 +64,17 @@ router.get("/signup", async (req, res) => {
     res.render("signup", { info: req.flash('info'), subjects: [] });
   }
 })
+
+// Registration success page
+router.get("/registration-success", (req, res) => {
+  const { studentId, teacherId } = req.query;
+  res.render("registration-success", { 
+    studentId: studentId ? decodeURIComponent(studentId) : undefined,
+    teacherId: teacherId ? decodeURIComponent(teacherId) : undefined,
+    layout: false 
+  });
+})
+
 router.get("/admin/login", (req, res) => {res.render("admin-login", {info:req.flash('info')})})
 router.get('/forgot-password', (req, res) => res.render('forgot-password', {info:req.flash('info')}));
 
