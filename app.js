@@ -21,20 +21,29 @@ app.use(
     secret: process.env.SESSION_SECRET || 'your_session_secret_here',
     store: MongoStore.create({
       mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management',
-      ttl: 24 * 60 * 60 // 1 day
+      ttl: 24 * 60 * 60, // 1 day
+      autoRemove: 'native' // Enable automatic removal of expired sessions
     }),
     saveUninitialized: false,
     resave: false,
     cookie: {
       maxAge: 60 * 60 * 1000, // 1 hour
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      domain: process.env.NODE_ENV === "production" ? undefined : undefined, // Let the browser set the domain
     },
+    name: 'connect.sid' // Explicitly set session cookie name
   })
 );
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === "production" ? 
+    [process.env.FRONTEND_URL || 'https://school-management-system-l01f.onrender.com'] : 
+    ['http://localhost:3000', 'http://localhost:4000'],
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(flash());
@@ -80,16 +89,36 @@ app.use((req, res, next) => {
   next();
 });
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management')
-  .then(() => {
-    console.log('Connected to MongoDB');
-    const port = process.env.PORT || 4000;
-    app.listen(port, () => {
-      console.log(`Server is up and running on port`);
-    });
-  })
-  .catch((error) => {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
+// Connect to MongoDB with better error handling
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+  socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+})
+.then(() => {
+  console.log('✅ Connected to MongoDB successfully');
+  const port = process.env.PORT || 4000;
+  app.listen(port, () => {
+    console.log(`🚀 Server is running on port ${port}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Database: ${process.env.MONGODB_URI ? 'Production' : 'Local'}`);
   });
+})
+.catch((error) => {
+  console.error('❌ MongoDB connection error:', error);
+  process.exit(1);
+});
+
+// Handle MongoDB connection events
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️  MongoDB disconnected');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB reconnected');
+});

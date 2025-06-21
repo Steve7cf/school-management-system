@@ -111,8 +111,13 @@ router.get("/logout", (req, res) => {
       logEvent('logout', 'unknown', { role: 'unknown' });
     }
     
-    // The name 'connect.sid' is the default for express-session
-    res.clearCookie('connect.sid'); 
+    // Clear the session cookie with proper options for production
+    res.clearCookie('connect.sid', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: '/'
+    }); 
     res.redirect("/login");
   });
 })
