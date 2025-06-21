@@ -51,7 +51,6 @@ const teacherSchema = new mongoose.Schema({
 });
 
 // Indexes for efficient queries
-teacherSchema.index({ teacherId: 1 });
 teacherSchema.index({ email: 1 });
 teacherSchema.index({ subjects: 1 });
 
