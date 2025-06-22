@@ -98,6 +98,9 @@ router.get('/dashboard/parent', isAuthenticated, isParent, dashboardController.p
 // Logout route
 router.get("/logout", (req, res) => {
   const user = req.session.user; // Capture user before destroying session
+  const isProduction = process.env.NODE_ENV === "production";
+  const domain = process.env.DOMAIN || undefined;
+  
   req.session.destroy(err => {
     if (err) {
       console.error("Session destruction error:", err);
@@ -114,9 +117,10 @@ router.get("/logout", (req, res) => {
     // Clear the session cookie with proper options for production
     res.clearCookie('connect.sid', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      path: '/'
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: '/',
+      domain: domain
     }); 
     res.redirect("/login");
   });

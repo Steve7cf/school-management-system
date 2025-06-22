@@ -15,7 +15,13 @@ const MongoStore = require("connect-mongo");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// Middleware
+// Middleware - Cookie parser must come before session
+app.use(cookie());
+
+// Session configuration with production-specific settings
+const isProduction = process.env.NODE_ENV === "production";
+const domain = process.env.DOMAIN || undefined;
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'your_session_secret_here',
@@ -28,17 +34,19 @@ app.use(
     resave: false,
     cookie: {
       maxAge: 60 * 60 * 1000, // 1 hour
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: isProduction ? "none" : "lax",
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      domain: process.env.NODE_ENV === "production" ? undefined : undefined, // Let the browser set the domain
+      secure: isProduction, // Must be true in production for HTTPS
+      path: '/',
+      domain: domain // Only set if DOMAIN env var is provided
     },
     name: 'connect.sid' // Explicitly set session cookie name
   })
 );
 
+// CORS configuration - must come after session
 app.use(cors({
-  origin: process.env.NODE_ENV === "production" ? 
+  origin: isProduction ? 
     [process.env.FRONTEND_URL || 'https://school-management-system-l01f.onrender.com'] : 
     ['http://localhost:3000', 'http://localhost:4000'],
   credentials: true
@@ -47,7 +55,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(flash());
-app.use(cookie());
 app.use(logger("dev"));
 app.use(helmet({
   contentSecurityPolicy: {
@@ -103,6 +110,10 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_ma
     console.log(`🚀 Server is running on port ${port}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🔗 Database: ${process.env.MONGODB_URI ? 'Production' : 'Local'}`);
+    console.log(`🍪 Session Secret: ${process.env.SESSION_SECRET ? 'Set' : 'Using default'}`);
+    console.log(`🔒 Cookie Secure: ${isProduction}`);
+    console.log(`🌐 Cookie SameSite: ${isProduction ? 'none' : 'lax'}`);
+    console.log(`🏠 Domain: ${domain || 'auto'}`);
   });
 })
 .catch((error) => {
