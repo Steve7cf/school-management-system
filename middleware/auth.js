@@ -3,7 +3,7 @@ const JWTService = require('../services/jwtService');
 
 const isAuthenticated = (req, res, next) => {
     // First check session-based authentication
-    if (req.session && req.session.user) {
+    if (req.session && req.session.user && req.session.user.role) {
         return next();
     }
     
@@ -12,20 +12,35 @@ const isAuthenticated = (req, res, next) => {
     if (token) {
         try {
             const decoded = JWTService.verifyToken(token);
-            // Set user info in session for compatibility
-            req.session.user = {
-                id: decoded.id,
-                email: decoded.email,
-                role: decoded.role
-            };
-            return next();
+            
+            // Ensure we have the minimum required user data
+            if (decoded && decoded.id && decoded.role) {
+                // Set user info in session for compatibility
+                req.session.user = {
+                    id: decoded.id,
+                    email: decoded.email,
+                    role: decoded.role,
+                    // Try to get additional info from userInfo cookie
+                    ...(req.cookies.userInfo && JSON.parse(req.cookies.userInfo))
+                };
+                
+                console.log(`🔐 User authenticated via JWT: ${decoded.role} - ${decoded.email || decoded.id}`);
+                return next();
+            } else {
+                console.log('JWT token missing required fields:', decoded);
+                res.clearCookie('token');
+                res.clearCookie('userInfo');
+            }
         } catch (error) {
             console.log('JWT verification failed:', error.message);
             // Clear invalid token
             res.clearCookie('token');
+            res.clearCookie('userInfo');
         }
     }
     
+    // If we get here, user is not authenticated
+    console.log('❌ Authentication failed - redirecting to login');
     res.redirect('/login');
 };
 
@@ -56,6 +71,16 @@ const isAdmin = (req, res, next) => {
     if (req.session.user && req.session.user.role === 'admin') {
         return next();
     }
+    
+    // Debug logging for production issues
+    console.log('🔒 Admin access denied:', {
+        hasSession: !!req.session,
+        hasUser: !!req.session?.user,
+        userRole: req.session?.user?.role,
+        sessionId: req.sessionID,
+        cookies: Object.keys(req.cookies)
+    });
+    
     // If AJAX/fetch, return JSON
     if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
         return res.status(401).json({ success: false, message: 'Unauthorized: Admins only' });
@@ -68,6 +93,13 @@ const isTeacher = (req, res, next) => {
     if (req.session && req.session.user && req.session.user.role === 'teacher') {
         return next();
     }
+    
+    console.log('🔒 Teacher access denied:', {
+        hasSession: !!req.session,
+        hasUser: !!req.session?.user,
+        userRole: req.session?.user?.role
+    });
+    
     res.status(403).render('error', { 
         title: 'Access Denied',
         message: 'You do not have permission to access this page.',
@@ -79,6 +111,13 @@ const isStudent = (req, res, next) => {
     if (req.session && req.session.user && req.session.user.role === 'student') {
         return next();
     }
+    
+    console.log('🔒 Student access denied:', {
+        hasSession: !!req.session,
+        hasUser: !!req.session?.user,
+        userRole: req.session?.user?.role
+    });
+    
     res.status(403).render('error', { 
         title: 'Access Denied',
         message: 'You do not have permission to access this page.',
@@ -90,6 +129,13 @@ const isParent = (req, res, next) => {
     if (req.session && req.session.user && req.session.user.role === 'parent') {
         return next();
     }
+    
+    console.log('🔒 Parent access denied:', {
+        hasSession: !!req.session,
+        hasUser: !!req.session?.user,
+        userRole: req.session?.user?.role
+    });
+    
     res.status(403).render('error', { 
         title: 'Access Denied',
         message: 'You do not have permission to access this page.',
@@ -102,6 +148,13 @@ const isAdminOrTeacher = (req, res, next) => {
         (req.session.user.role === 'admin' || req.session.user.role === 'teacher')) {
         return next();
     }
+    
+    console.log('🔒 AdminOrTeacher access denied:', {
+        hasSession: !!req.session,
+        hasUser: !!req.session?.user,
+        userRole: req.session?.user?.role
+    });
+    
     res.status(403).render('error', { 
         title: 'Access Denied',
         message: 'You do not have permission to access this page.',

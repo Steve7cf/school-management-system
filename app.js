@@ -120,7 +120,43 @@ app.use(helmet({
 // Add path and user to res.locals for all views
 app.use((req, res, next) => {
   res.locals.path = req.path;
-  res.locals.user = req.session.user || null;
+  
+  // First try to get user from session
+  if (req.session && req.session.user) {
+    res.locals.user = req.session.user;
+  } else {
+    // Fallback to JWT token from cookies
+    const token = req.cookies.token;
+    if (token) {
+      try {
+        const JWTService = require('./services/jwtService');
+        const decoded = JWTService.verifyToken(token);
+        
+        // Create user object from JWT data
+        res.locals.user = {
+          id: decoded.id,
+          email: decoded.email,
+          role: decoded.role,
+          // Try to get additional info from userInfo cookie
+          ...(req.cookies.userInfo && JSON.parse(req.cookies.userInfo))
+        };
+        
+        // Also set it in session for consistency
+        req.session.user = res.locals.user;
+        
+        console.log(`🔐 User restored from JWT: ${decoded.role} - ${decoded.email}`);
+      } catch (error) {
+        console.log('JWT verification failed in middleware:', error.message);
+        res.locals.user = null;
+        // Clear invalid token
+        res.clearCookie('token');
+        res.clearCookie('userInfo');
+      }
+    } else {
+      res.locals.user = null;
+    }
+  }
+  
   next();
 });
 

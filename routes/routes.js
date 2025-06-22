@@ -1759,6 +1759,54 @@ router.get('/test-cookie-roundtrip', (req, res) => {
   });
 });
 
+// Debug endpoint for production troubleshooting
+router.get('/api/user-info', (req, res) => {
+  try {
+    const userInfo = {
+      session: req.session ? {
+        exists: true,
+        user: req.session.user,
+        id: req.sessionID
+      } : {
+        exists: false
+      },
+      cookies: {
+        token: req.cookies.token ? 'present' : 'missing',
+        userInfo: req.cookies.userInfo ? 'present' : 'missing',
+        sessionId: req.cookies['connect.sid'] ? 'present' : 'missing'
+      },
+      headers: {
+        userAgent: req.headers['user-agent'],
+        accept: req.headers.accept
+      },
+      environment: process.env.NODE_ENV || 'development'
+    };
+    
+    // Try to decode JWT if present
+    if (req.cookies.token) {
+      try {
+        const JWTService = require('../services/jwtService');
+        const decoded = JWTService.verifyToken(req.cookies.token);
+        userInfo.jwt = {
+          valid: true,
+          decoded: decoded
+        };
+      } catch (error) {
+        userInfo.jwt = {
+          valid: false,
+          error: error.message
+        };
+      }
+    } else {
+      userInfo.jwt = { valid: false, error: 'No token present' };
+    }
+    
+    res.json(userInfo);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // app routes
 router.use("/", (req, res, next) => {
     res.locals.user = req.session.user;
