@@ -22,27 +22,47 @@ app.use(cookie());
 const isProduction = process.env.NODE_ENV === "production";
 const domain = process.env.DOMAIN || undefined;
 
+// Enhanced session configuration for production
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'your_session_secret_here',
     store: MongoStore.create({
       mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management',
       ttl: 24 * 60 * 60, // 1 day
-      autoRemove: 'native' // Enable automatic removal of expired sessions
+      autoRemove: 'native', // Enable automatic removal of expired sessions
+      touchAfter: 24 * 3600 // Only update session once per day
     }),
     saveUninitialized: false,
     resave: false,
+    rolling: true, // Extend session on each request
     cookie: {
       maxAge: 60 * 60 * 1000, // 1 hour
       sameSite: isProduction ? "none" : "lax",
       httpOnly: true,
       secure: isProduction, // Must be true in production for HTTPS
       path: '/',
-      domain: domain // Only set if DOMAIN env var is provided
+      domain: domain, // Only set if DOMAIN env var is provided
+      expires: new Date(Date.now() + 60 * 60 * 1000) // Explicit expiration
     },
-    name: 'connect.sid' // Explicitly set session cookie name
+    name: 'connect.sid', // Explicitly set session cookie name
+    unset: 'destroy' // Destroy session when unset
   })
 );
+
+// Add session debugging middleware
+app.use((req, res, next) => {
+  // Log session creation and cookie setting
+  const originalEnd = res.end;
+  res.end = function(chunk, encoding) {
+    if (req.session && req.session.user) {
+      console.log(`🔐 Session created for user: ${req.session.user.role} - ${req.session.user.firstName || req.session.user.studentId || req.session.user.email}`);
+      console.log(`🍪 Session ID: ${req.sessionID}`);
+      console.log(`📅 Session expires: ${new Date(Date.now() + 60 * 60 * 1000).toISOString()}`);
+    }
+    originalEnd.call(this, chunk, encoding);
+  };
+  next();
+});
 
 // CORS configuration - must come after session
 app.use(cors({

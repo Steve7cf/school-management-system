@@ -259,9 +259,20 @@ const authTeacher = async (req, res) => {
       role: role
     };
 
-    await logEvent('login', user.email, { role: 'teacher' });
-
-    return res.redirect("/dashboard/teacher");
+    // Force session save before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        req.flash("info", ["Session error", "danger"]);
+        return res.redirect("/login");
+      }
+      
+      console.log(`🔐 Teacher login successful: ${user.email}`);
+      console.log(`🍪 Session ID: ${req.sessionID}`);
+      
+      logEvent('login', user.email, { role: 'teacher' });
+      return res.redirect("/dashboard/teacher");
+    });
   } catch (error) {
     console.log(error);
     req.flash("info", ["Server error", "danger"]);
@@ -304,9 +315,20 @@ const authStudent = async (req, res) => {
       role: 'student'
     };
 
-    await logEvent('login', user.studentId, { role: 'student' });
-
-    return res.redirect("/dashboard/student");
+    // Force session save before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        req.flash("info", ["Session error", "danger"]);
+        return res.redirect("/login");
+      }
+      
+      console.log(`🔐 Student login successful: ${user.studentId}`);
+      console.log(`🍪 Session ID: ${req.sessionID}`);
+      
+      logEvent('login', user.studentId, { role: 'student' });
+      return res.redirect("/dashboard/student");
+    });
   } catch (error) {
     console.log(error);
     req.flash("info", ["Server error", "danger"]);
@@ -359,9 +381,20 @@ const authParent = async (req, res) => {
       studentId: user.studentId
     };
 
-    await logEvent('login', email, { role: 'parent', studentId: user.studentId });
-
-    return res.redirect("/dashboard/parent");
+    // Force session save before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        req.flash("info", ["Session error", "danger"]);
+        return res.redirect("/login");
+      }
+      
+      console.log(`🔐 Parent login successful: ${user.email}`);
+      console.log(`🍪 Session ID: ${req.sessionID}`);
+      
+      logEvent('login', email, { role: 'parent', studentId: user.studentId });
+      return res.redirect("/dashboard/parent");
+    });
   } catch (error) {
     console.log("Parent login error:", error);
     req.flash("info", ["Server error occurred. Please try again later.", "danger"]);
@@ -399,8 +432,21 @@ const authAdmin = async (req, res) => {
       email: admin.email,
       role: 'admin',
     };
-    await logEvent('login', email, { role: 'admin' });
-    res.redirect('/dashboard/admin');
+
+    // Force session save before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        req.flash('info', ['Session error', 'danger']);
+        return res.redirect('/login');
+      }
+      
+      console.log(`🔐 Admin login successful: ${admin.email}`);
+      console.log(`🍪 Session ID: ${req.sessionID}`);
+      
+      logEvent('login', email, { role: 'admin' });
+      res.redirect('/dashboard/admin');
+    });
   } catch (error) {
     console.error(error);
     req.flash('info', ['An error occurred. Please try again.', 'danger']);
