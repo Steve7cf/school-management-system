@@ -23,13 +23,33 @@ const isAuthenticated = async (req, res, next) => {
                 return res.redirect('/login');
             }
 
+            // Get user info from cookie or decode from token
+            let userInfo = null;
+            if (req.cookies.userInfo) {
+                try {
+                    userInfo = JSON.parse(req.cookies.userInfo);
+                } catch (e) {
+                    // If userInfo cookie is invalid, use token data
+                    userInfo = {
+                        id: decoded._id,
+                        role: decoded.role,
+                        email: decoded.email
+                    };
+                }
+            } else {
+                // Fallback to token data
+                userInfo = {
+                    id: decoded._id,
+                    role: decoded.role,
+                    email: decoded.email
+                };
+            }
+
             // Set user info in res.locals for template access
-            res.locals.user = {
-                id: decoded._id,
-                role: decoded.role,
-                email: decoded.email,
-                studentId: decoded.studentId
-            };
+            res.locals.user = userInfo;
+            
+            // Also set in session for consistency
+            req.session.user = userInfo;
 
             return next();
         } catch (error) {
@@ -65,12 +85,13 @@ const isAuthenticatedJWT = (req, res, next) => {
 
 // Role-based middleware with enhanced logging
 const isAdmin = (req, res, next) => {
-  if (!req.session.user && !res.locals.user) {
+  const user = req.session.user || res.locals.user;
+  
+  if (!user) {
     req.flash('info', ['Please log in to access this page.', 'warning']);
     return res.redirect('/login');
   }
 
-  const user = req.session.user || res.locals.user;
   if (user.role === 'admin') {
     return next();
   }
@@ -80,12 +101,13 @@ const isAdmin = (req, res, next) => {
 };
 
 const isTeacher = (req, res, next) => {
-  if (!req.session.user && !res.locals.user) {
+  const user = req.session.user || res.locals.user;
+  
+  if (!user) {
     req.flash('info', ['Please log in to access this page.', 'warning']);
     return res.redirect('/login');
   }
 
-  const user = req.session.user || res.locals.user;
   if (user.role === 'teacher') {
     return next();
   }
@@ -95,12 +117,13 @@ const isTeacher = (req, res, next) => {
 };
 
 const isStudent = (req, res, next) => {
-  if (!req.session.user && !res.locals.user) {
+  const user = req.session.user || res.locals.user;
+  
+  if (!user) {
     req.flash('info', ['Please log in to access this page.', 'warning']);
     return res.redirect('/login');
   }
 
-  const user = req.session.user || res.locals.user;
   if (user.role === 'student') {
     return next();
   }
@@ -110,12 +133,13 @@ const isStudent = (req, res, next) => {
 };
 
 const isParent = (req, res, next) => {
-  if (!req.session.user && !res.locals.user) {
+  const user = req.session.user || res.locals.user;
+  
+  if (!user) {
     req.flash('info', ['Please log in to access this page.', 'warning']);
     return res.redirect('/login');
   }
 
-  const user = req.session.user || res.locals.user;
   if (user.role === 'parent') {
     return next();
   }
@@ -125,12 +149,13 @@ const isParent = (req, res, next) => {
 };
 
 const isAdminOrTeacher = (req, res, next) => {
-  if (!req.session.user && !res.locals.user) {
+  const user = req.session.user || res.locals.user;
+  
+  if (!user) {
     req.flash('info', ['Please log in to access this page.', 'warning']);
     return res.redirect('/login');
   }
 
-  const user = req.session.user || res.locals.user;
   if (user.role === 'admin' || user.role === 'teacher') {
     return next();
   }
@@ -142,7 +167,8 @@ const isAdminOrTeacher = (req, res, next) => {
 // Middleware to check if user has any of the specified roles
 const hasRole = (roles) => {
     return (req, res, next) => {
-        if (!req.session.user || !roles.includes(req.session.user.role)) {
+        const user = req.session.user || res.locals.user;
+        if (!user || !roles.includes(user.role)) {
             req.flash('info', ['Access denied. Insufficient privileges.', 'danger']);
             return res.redirect('/login');
         }
@@ -151,7 +177,7 @@ const hasRole = (roles) => {
 };
 
 function isTeacherOrAdmin(req, res, next) {
-    const user = req.session.user;
+    const user = req.session.user || res.locals.user;
     if (user && (user.role === 'teacher' || user.role === 'admin')) {
         return next();
     }

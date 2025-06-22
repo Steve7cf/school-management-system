@@ -13,8 +13,14 @@ const Log = require('../models/log');
 // Main dashboard controller - redirects based on user role
 exports.index = async (req, res) => {
     try {
-        const user = req.session.user;
+        // Get user from session or res.locals
+        const user = req.session.user || res.locals.user;
         
+        if (!user) {
+            req.flash('info', ['Please log in to access the dashboard', 'warning']);
+            return res.redirect('/login');
+        }
+
         // Redirect based on user role
         switch (user.role) {
             case 'admin':
@@ -30,7 +36,6 @@ exports.index = async (req, res) => {
                 return res.redirect('/login');
         }
     } catch (error) {
-        console.error('Error in dashboard redirect:', error);
         req.flash('info', ['Error loading dashboard', 'danger']);
         res.redirect('/login');
     }
@@ -39,6 +44,14 @@ exports.index = async (req, res) => {
 // Admin dashboard controller
 exports.adminDashboard = async (req, res) => {
     try {
+        // Get user from session or res.locals
+        const user = req.session.user || res.locals.user;
+        
+        if (!user || user.role !== 'admin') {
+            req.flash('info', ['Access denied. Admin privileges required.', 'danger']);
+            return res.redirect('/login');
+        }
+
         const totalStudents = await Student.countDocuments();
         const totalTeachers = await Teacher.countDocuments();
         const totalClasses = await Class.countDocuments();
@@ -65,12 +78,12 @@ exports.adminDashboard = async (req, res) => {
         
         res.render('pages/dashboard/admin', {
             title: 'Admin Dashboard',
-            user: req.session.user,
+            user: user,
             data
         });
     } catch (error) {
-        console.error('Error loading admin dashboard:', error);
-        res.status(500).send('Error loading dashboard');
+        req.flash('info', ['Error loading admin dashboard', 'danger']);
+        res.redirect('/login');
     }
 };
 
