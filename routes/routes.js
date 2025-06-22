@@ -1742,6 +1742,51 @@ router.get('/logs', isAuthenticated, async (req, res) => {
     }
 });
 
+// Test routes for cookie debugging
+router.get('/test-cookie-parser', (req, res) => {
+  console.log('🔍 Testing cookie parser...');
+  console.log('Raw cookies:', req.headers.cookie);
+  console.log('Parsed cookies:', req.cookies);
+  console.log('Signed cookies:', req.signedCookies);
+  
+  res.json({
+    rawCookies: req.headers.cookie,
+    parsedCookies: req.cookies,
+    signedCookies: req.signedCookies,
+    sessionCookie: req.cookies['connect.sid'],
+    cookieCount: req.cookies ? Object.keys(req.cookies).length : 0
+  });
+});
+
+router.get('/test-cookie-roundtrip', (req, res) => {
+  console.log('🔄 Testing cookie roundtrip...');
+  const testValue = 'test-cookie-value-' + Date.now();
+  
+  // Set a test cookie with same settings as session
+  const isProduction = process.env.NODE_ENV === "production";
+  res.cookie('testCookie', testValue, {
+    maxAge: 60000,
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/'
+  });
+  
+  console.log(`🍪 Set test cookie: ${testValue}`);
+  
+  res.json({
+    message: 'Test cookie set',
+    value: testValue,
+    existingCookies: req.cookies,
+    cookieSettings: {
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      httpOnly: true,
+      path: '/'
+    }
+  });
+});
+
 // app routes
 router.use("/", (req, res, next) => {
     res.locals.user = req.session.user;

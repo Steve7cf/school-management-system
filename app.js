@@ -16,7 +16,7 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 // Middleware - Cookie parser must come before session
-app.use(cookie());
+app.use(cookie(process.env.SESSION_SECRET || 'fallback_secret'));
 
 // Session configuration with production-specific settings
 const isProduction = process.env.NODE_ENV === "production";
@@ -64,13 +64,38 @@ app.use((req, res, next) => {
   next();
 });
 
+// Enhanced cookie debugging middleware
+app.use((req, res, next) => {
+  // Log incoming cookies with detailed parsing info
+  if (req.headers.cookie) {
+    console.log(`🍪 Raw cookies: ${req.headers.cookie}`);
+    console.log(`🍪 Parsed cookies:`, req.cookies);
+    console.log(`🍪 Session cookie: ${req.cookies['connect.sid'] || 'Not found'}`);
+    
+    // Check cookie size
+    const cookieSize = Buffer.byteLength(req.headers.cookie, 'utf8');
+    console.log(`🍪 Cookie size: ${cookieSize} bytes`);
+    if (cookieSize > 4000) {
+      console.warn('⚠️  Large cookie detected - may cause issues');
+    }
+  } else {
+    console.log(`🍪 No incoming cookies`);
+  }
+  
+  // Intercept Set-Cookie headers
+  const originalSetHeader = res.setHeader;
+  res.setHeader = function(name, value) {
+    if (name.toLowerCase() === 'set-cookie') {
+      console.log(`🍪 Setting cookie: ${value}`);
+    }
+    return originalSetHeader.call(this, name, value);
+  };
+  
+  next();
+});
+
 // CORS configuration - must come after session
-app.use(cors({
-  origin: isProduction ? 
-    [process.env.FRONTEND_URL || 'https://school-management-system-l01f.onrender.com'] : 
-    ['http://localhost:3000', 'http://localhost:4000'],
-  credentials: true
-}));
+app.use(cors())
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -425,6 +425,7 @@ const authAdmin = async (req, res) => {
       return res.redirect('/login');
     }
 
+    // Set up session
     req.session.user = {
       id: admin._id,
       firstName: admin.firstName,
@@ -433,7 +434,7 @@ const authAdmin = async (req, res) => {
       role: 'admin',
     };
 
-    // Force session save before redirect
+    // Force session save and ensure cookie is set
     req.session.save((err) => {
       if (err) {
         console.error('Session save error:', err);
@@ -444,8 +445,42 @@ const authAdmin = async (req, res) => {
       console.log(`🔐 Admin login successful: ${admin.email}`);
       console.log(`🍪 Session ID: ${req.sessionID}`);
       
-      logEvent('login', email, { role: 'admin' });
-      res.redirect('/dashboard/admin');
+      // Ensure cookie is set by regenerating session
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error('Session regeneration error:', err);
+          req.flash('info', ['Session error', 'danger']);
+          return res.redirect('/login');
+        }
+        
+        // Set user data again after regeneration
+        req.session.user = {
+          id: admin._id,
+          firstName: admin.firstName,
+          lastName: admin.lastName,
+          email: admin.email,
+          role: 'admin',
+        };
+        
+        // Save the regenerated session
+        req.session.save((err) => {
+          if (err) {
+            console.error('Regenerated session save error:', err);
+            req.flash('info', ['Session error', 'danger']);
+            return res.redirect('/login');
+          }
+          
+          console.log(`✅ Session regenerated and saved: ${req.sessionID}`);
+          
+          logEvent('login', email, { role: 'admin' });
+          
+          // Set additional headers for debugging
+          res.setHeader('X-Session-ID', req.sessionID);
+          res.setHeader('X-User-Role', 'admin');
+          
+          res.redirect('/dashboard/admin');
+        });
+      });
     });
   } catch (error) {
     console.error(error);
