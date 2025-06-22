@@ -10,6 +10,7 @@ const helmet = require("helmet");
 const logger = require("morgan");
 const cookie = require("cookie-parser");
 const MongoStore = require("connect-mongo");
+const jwt = require("jsonwebtoken");
 
 // View engine setup
 app.set("view engine", "ejs");
@@ -25,27 +26,21 @@ const domain = process.env.DOMAIN || undefined;
 // Enhanced session configuration for production
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'your_session_secret_here',
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management',
-      ttl: 24 * 60 * 60, // 1 day
-      autoRemove: 'native', // Enable automatic removal of expired sessions
-      touchAfter: 24 * 3600 // Only update session once per day
-    }),
-    saveUninitialized: false,
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
     resave: false,
-    rolling: true, // Extend session on each request
+    saveUninitialized: false,
     cookie: {
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours (increased from 1 hour)
-      sameSite: isProduction ? "none" : "lax",
       httpOnly: true,
-      secure: isProduction, // Must be true in production for HTTPS
-      path: '/',
-      domain: domain, // Only set if DOMAIN env var is provided
-      expires: new Date(Date.now() + 24 * 60 * 60 * 1000) // Explicit expiration
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      maxAge: 60 * 60 * 1000, // 1 hour
+      domain: domain
     },
-    name: 'connect.sid', // Explicitly set session cookie name
-    unset: 'destroy' // Destroy session when unset
+    store: new MongoStore({
+      mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management',
+      ttl: 60 * 60, // 1 hour in seconds
+      autoRemove: 'native'
+    })
   })
 );
 
@@ -129,26 +124,20 @@ app.use((req, res, next) => {
     const token = req.cookies.token;
     if (token) {
       try {
-        const JWTService = require('./services/jwtService');
-        const decoded = JWTService.verifyToken(token);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret');
         
-        // Create user object from JWT data
-        res.locals.user = {
-          id: decoded.id,
-          email: decoded.email,
-          role: decoded.role,
-          // Try to get additional info from userInfo cookie
-          ...(req.cookies.userInfo && JSON.parse(req.cookies.userInfo))
-        };
-        
-        // Also set it in session for consistency
-        req.session.user = res.locals.user;
-        
-        console.log(`🔐 User restored from JWT: ${decoded.role} - ${decoded.email}`);
+        // Validate required fields
+        if (decoded._id && decoded.role) {
+          // Set user info in res.locals for template access
+          res.locals.user = {
+            id: decoded._id,
+            role: decoded.role,
+            email: decoded.email,
+            studentId: decoded.studentId
+          };
+        }
       } catch (error) {
-        console.log('JWT verification failed in middleware:', error.message);
-        res.locals.user = null;
-        // Clear invalid token
+        // Invalid token - clear it
         res.clearCookie('token');
         res.clearCookie('userInfo');
       }
@@ -167,50 +156,43 @@ app.use(express.static(path.join(__dirname, "node_modules/bootstrap/dist")));
 // Routes
 app.use("/", require("./routes/routes"));
 
-// Logging middleware
+// Request logging middleware
 app.use((req, res, next) => {
-  const start = Date.now();
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
-  });
-  next();
+    const start = Date.now();
+    
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        // Log only in development or for errors
+        if (process.env.NODE_ENV === 'development' || res.statusCode >= 400) {
+            console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} - ${duration}ms`);
+        }
+    });
+    
+    next();
 });
 
-// Connect to MongoDB with better error handling
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-  socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
-})
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management')
 .then(() => {
-  console.log('✅ Connected to MongoDB successfully');
-  const port = process.env.PORT || 4000;
-  app.listen(port, () => {
+    console.log('✅ Connected to MongoDB successfully');
+})
+.catch((err) => {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+});
+
+// Start server
+const port = process.env.PORT || 4000;
+app.listen(port, () => {
     console.log(`🚀 Server is running on port ${port}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Database: ${process.env.MONGODB_URI ? 'Production' : 'Local'}`);
-    console.log(`🍪 Session Secret: ${process.env.SESSION_SECRET ? 'Set' : 'Using default'}`);
-    console.log(`🔒 Cookie Secure: ${isProduction}`);
-    console.log(`🌐 Cookie SameSite: ${isProduction ? 'none' : 'lax'}`);
-    console.log(`🏠 Domain: ${domain || 'auto'}`);
-  });
-})
-.catch((error) => {
-  console.error('❌ MongoDB connection error:', error);
-  process.exit(1);
 });
 
 // Handle MongoDB connection events
-mongoose.connection.on('error', (err) => {
-  console.error('❌ MongoDB connection error:', err);
-});
-
 mongoose.connection.on('disconnected', () => {
-  console.log('⚠️  MongoDB disconnected');
+    console.log('⚠️  MongoDB disconnected');
 });
 
 mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB reconnected');
+    console.log('✅ MongoDB reconnected');
 });

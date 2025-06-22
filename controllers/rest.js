@@ -46,8 +46,6 @@ const setAuthCookies = (res, user, token) => {
     domain: domain,
     expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
   });
-
-  console.log(`🍪 Authentication cookies set for ${user.role}: ${user.firstName || user.studentId || user.email}`);
 };
 
 // register student
@@ -117,7 +115,6 @@ const registerStudent = async (req, res) => {
 
     res.redirect(`/registration-success?studentId=${encodeURIComponent(studentId)}`);
   } catch (error) {
-    console.log(error.message);
     return res.status(500).json({ message: "Whoops! internal server Errors" });
   }
 };
@@ -198,8 +195,6 @@ const registerParent = async (req, res) => {
     req.flash("info", ["Parent account created successfully! You can now log in.", "success"]);
     res.redirect("/login");
   } catch (error) {
-    console.log(error.message);
-    
     // Handle specific MongoDB errors
     if (error.code === 11000) {
       if (error.keyPattern && error.keyPattern.studentId) {
@@ -259,7 +254,6 @@ const registerTeacher = async (req, res) => {
     req.flash('info', ['Teacher account created successfully! Please log in.', 'success']);
     res.redirect('/login');
   } catch (error) {
-    console.error(error);
     req.flash('info', ['An error occurred during registration.', 'danger']);
     res.redirect('/signup');
   }
@@ -313,20 +307,14 @@ const authTeacher = async (req, res) => {
     // Force session save before redirect
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
         req.flash("info", ["Session error", "danger"]);
         return res.redirect("/login");
       }
-      
-      console.log(`🔐 Teacher login successful: ${user.email}`);
-      console.log(`🍪 Session ID: ${req.sessionID}`);
-      console.log(`🎫 JWT Token generated: ${token.substring(0, 20)}...`);
       
       logEvent('login', user.email, { role: 'teacher' });
       return res.redirect("/dashboard/teacher");
     });
   } catch (error) {
-    console.log(error);
     req.flash("info", ["Server error", "danger"]);
     return res.redirect("/login");
   }
@@ -380,20 +368,14 @@ const authStudent = async (req, res) => {
     // Force session save before redirect
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
         req.flash("info", ["Session error", "danger"]);
         return res.redirect("/login");
       }
-      
-      console.log(`🔐 Student login successful: ${user.studentId}`);
-      console.log(`🍪 Session ID: ${req.sessionID}`);
-      console.log(`🎫 JWT Token generated: ${token.substring(0, 20)}...`);
       
       logEvent('login', user.studentId, { role: 'student' });
       return res.redirect("/dashboard/student");
     });
   } catch (error) {
-    console.log(error);
     req.flash("info", ["Server error", "danger"]);
     return res.redirect("/login");
   }
@@ -457,20 +439,14 @@ const authParent = async (req, res) => {
     // Force session save before redirect
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
         req.flash("info", ["Session error", "danger"]);
         return res.redirect("/login");
       }
-      
-      console.log(`🔐 Parent login successful: ${user.email}`);
-      console.log(`🍪 Session ID: ${req.sessionID}`);
-      console.log(`🎫 JWT Token generated: ${token.substring(0, 20)}...`);
       
       logEvent('login', email, { role: 'parent', studentId: user.studentId });
       return res.redirect("/dashboard/parent");
     });
   } catch (error) {
-    console.log("Parent login error:", error);
     req.flash("info", ["Server error occurred. Please try again later.", "danger"]);
     return res.redirect("/login");
   }
@@ -521,14 +497,9 @@ const authAdmin = async (req, res) => {
     // Force session save before redirect
     req.session.save((err) => {
       if (err) {
-        console.error('Session save error:', err);
         req.flash('info', ['Session error', 'danger']);
         return res.redirect('/login');
       }
-      
-      console.log(`🔐 Admin login successful: ${admin.email}`);
-      console.log(`🍪 Session ID: ${req.sessionID}`);
-      console.log(`🎫 JWT Token generated: ${token.substring(0, 20)}...`);
       
       logEvent('login', email, { role: 'admin' });
       
@@ -539,7 +510,6 @@ const authAdmin = async (req, res) => {
       res.redirect('/dashboard/admin');
     });
   } catch (error) {
-    console.error(error);
     req.flash('info', ['An error occurred. Please try again.', 'danger']);
     res.redirect('/login');
   }
@@ -561,14 +531,12 @@ const announcement = async (req, res) => {
     }
     res.status(201).json(messageRec);
   } catch (error) {
-    console.log(error.message);
     return res.status(500).json({ message: "server error" });
   }
 };
 
 const addGrade = async (req, res) => {
   const { studentId, subject, grade, examType } = req.body;
-  console.log(studentId, subject, grade, examType);
   if (!studentId || !subject || !grade || !examType) {
     req.flash("info", ["some fields are missing", "warning"]);
     return res.redirect("/dashboard");
@@ -584,7 +552,6 @@ const addGrade = async (req, res) => {
     if (!gradeRecords) req.flash("info", ["no Record", "warning"]);
     return res.redirect("/dashboard");
   } catch (error) {
-    console.log(error.message);
     req.flash("info", ["internal server error", "warning"]);
     return res.redirect("/logout");
   }
@@ -596,7 +563,7 @@ const logout = async (req, res) => {
     // Clear session
     req.session.destroy((err) => {
       if (err) {
-        console.error('Session destruction error:', err);
+        // Session destruction error - continue anyway
       }
     });
 
@@ -631,8 +598,6 @@ const logout = async (req, res) => {
       domain: domain
     });
 
-    console.log('🔓 User logged out - all cookies cleared');
-    
     // Log the logout event if user info is available
     if (req.session && req.session.user) {
       logEvent('logout', req.session.user.email || req.session.user.studentId, { 
@@ -642,7 +607,6 @@ const logout = async (req, res) => {
 
     res.redirect('/login');
   } catch (error) {
-    console.error('Logout error:', error);
     res.redirect('/login');
   }
 };

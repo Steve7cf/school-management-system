@@ -37,39 +37,89 @@
                                 </div>
                                 <div class="card-body">
                                     <form action="/results/edit/<%= result._id %>" method="POST">
+                                        <!-- Student Information (Read-only) -->
                                         <div class="mb-3">
                                             <label class="form-label">Student</label>
-                                            <input type="text" class="form-control" value="<%= result.student.user.firstName %> <%= result.student.user.lastName %>" readonly>
+                                            <input type="text" class="form-control" value="<%= student.firstName %> <%= student.lastName %> (<%= result.studentId %>)" readonly>
                                         </div>
 
+                                        <!-- Exam Information (Read-only) -->
                                         <div class="mb-3">
                                             <label class="form-label">Exam</label>
-                                            <input type="text" class="form-control" value="<%= result.exam.name %> - <%= result.exam.subject.name %>" readonly>
+                                            <input type="text" class="form-control" value="<%= exam.title %> - <%= exam.subject.name %> (<%= result.examType %>)" readonly>
                                         </div>
 
+                                        <!-- Subject Information (Read-only) -->
                                         <div class="mb-3">
-                                            <label class="form-label">Class</label>
-                                            <input type="text" class="form-control" value="<%= result.exam.class.name %> <%= result.exam.class.section %>" readonly>
+                                            <label class="form-label">Subject</label>
+                                            <input type="text" class="form-control" value="<%= result.subject %>" readonly>
                                         </div>
 
+                                        <!-- Marks Obtained -->
                                         <div class="mb-3">
-                                            <label class="form-label">Current Grade</label>
-                                            <input type="text" class="form-control" value="<%= result.grade %>" readonly>
+                                            <label for="marksObtained" class="form-label">Marks Obtained</label>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   id="marksObtained" 
+                                                   name="marksObtained" 
+                                                   value="<%= result.marksObtained %>" 
+                                                   min="0" 
+                                                   step="0.01" 
+                                                   required>
+                                            <div class="form-text">Enter the marks obtained by the student</div>
                                         </div>
 
+                                        <!-- Total Marks -->
                                         <div class="mb-3">
-                                            <label class="form-label">Marks (out of 100)</label>
-                                            <input type="number" name="marks" class="form-control" value="<%= result.marks %>" min="0" max="100" required>
+                                            <label for="totalMarks" class="form-label">Total Marks</label>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   id="totalMarks" 
+                                                   name="totalMarks" 
+                                                   value="<%= result.totalMarks %>" 
+                                                   min="0" 
+                                                   step="0.01" 
+                                                   required>
+                                            <div class="form-text">Enter the total marks for this exam</div>
                                         </div>
 
+                                        <!-- Grade -->
                                         <div class="mb-3">
-                                            <label class="form-label">Remarks</label>
-                                            <textarea name="remarks" class="form-control" rows="3"><%= result.remarks %></textarea>
+                                            <label for="grade" class="form-label">Grade</label>
+                                            <select class="form-select" id="grade" name="grade" required>
+                                                <option value="">Select Grade</option>
+                                                <option value="A+" <%= result.grade === 'A+' ? 'selected' : '' %>>A+ (90-100%)</option>
+                                                <option value="A" <%= result.grade === 'A' ? 'selected' : '' %>>A (80-89%)</option>
+                                                <option value="B+" <%= result.grade === 'B+' ? 'selected' : '' %>>B+ (70-79%)</option>
+                                                <option value="B" <%= result.grade === 'B' ? 'selected' : '' %>>B (60-69%)</option>
+                                                <option value="C+" <%= result.grade === 'C+' ? 'selected' : '' %>>C+ (50-59%)</option>
+                                                <option value="C" <%= result.grade === 'C' ? 'selected' : '' %>>C (40-49%)</option>
+                                                <option value="D" <%= result.grade === 'D' ? 'selected' : '' %>>D (30-39%)</option>
+                                                <option value="F" <%= result.grade === 'F' ? 'selected' : '' %>>F (Below 30%)</option>
+                                            </select>
                                         </div>
+
+                                        <!-- Remarks -->
+                                        <div class="mb-3">
+                                            <label for="remarks" class="form-label">Remarks</label>
+                                            <textarea name="remarks" 
+                                                      id="remarks" 
+                                                      class="form-control" 
+                                                      rows="3" 
+                                                      placeholder="Enter any additional remarks about the result"><%= result.remarks || '' %></textarea>
+                                        </div>
+
+                                        <!-- Hidden fields for student and exam IDs -->
+                                        <input type="hidden" name="studentId" value="<%= student._id %>">
+                                        <input type="hidden" name="examId" value="<%= exam._id %>">
 
                                         <div class="d-flex justify-content-between">
-                                            <a href="/results" class="btn btn-secondary">Back to Results</a>
-                                            <button type="submit" class="btn btn-primary">Update Result</button>
+                                            <a href="/results" class="btn btn-secondary">
+                                                <i class="fas fa-arrow-left me-2"></i>Back to Results
+                                            </a>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save me-2"></i>Update Result
+                                            </button>
                                         </div>
                                     </form>
                                 </div>
@@ -89,5 +139,119 @@
     
     <!-- Custom JavaScript -->
     <script src="/js/main.js"></script>
+    
+    <!-- Result edit form JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const marksObtainedInput = document.getElementById('marksObtained');
+            const totalMarksInput = document.getElementById('totalMarks');
+            const gradeSelect = document.getElementById('grade');
+            
+            // Auto-calculate grade based on marks
+            function calculateGrade() {
+                const marks = parseFloat(marksObtainedInput.value) || 0;
+                const total = parseFloat(totalMarksInput.value) || 0;
+                
+                if (total > 0) {
+                    const percentage = (marks / total) * 100;
+                    let grade = '';
+                    
+                    if (percentage >= 90) grade = 'A+';
+                    else if (percentage >= 80) grade = 'A';
+                    else if (percentage >= 70) grade = 'B+';
+                    else if (percentage >= 60) grade = 'B';
+                    else if (percentage >= 50) grade = 'C+';
+                    else if (percentage >= 40) grade = 'C';
+                    else if (percentage >= 30) grade = 'D';
+                    else grade = 'F';
+                    
+                    // Set the grade if it's different from current
+                    if (gradeSelect.value !== grade) {
+                        gradeSelect.value = grade;
+                    }
+                }
+            }
+            
+            // Add event listeners for auto-calculation
+            marksObtainedInput.addEventListener('input', calculateGrade);
+            totalMarksInput.addEventListener('input', calculateGrade);
+            
+            // Form validation
+            form.addEventListener('submit', function(e) {
+                const marks = parseFloat(marksObtainedInput.value);
+                const total = parseFloat(totalMarksInput.value);
+                const grade = gradeSelect.value;
+                
+                // Clear previous errors
+                clearErrors();
+                
+                let hasErrors = false;
+                
+                // Validate marks
+                if (isNaN(marks) || marks < 0) {
+                    showError('marksObtained', 'Marks obtained must be a positive number');
+                    hasErrors = true;
+                }
+                
+                // Validate total marks
+                if (isNaN(total) || total <= 0) {
+                    showError('totalMarks', 'Total marks must be a positive number');
+                    hasErrors = true;
+                }
+                
+                // Validate marks don't exceed total
+                if (marks > total) {
+                    showError('marksObtained', 'Marks obtained cannot exceed total marks');
+                    hasErrors = true;
+                }
+                
+                // Validate grade
+                if (!grade) {
+                    showError('grade', 'Please select a grade');
+                    hasErrors = true;
+                }
+                
+                if (hasErrors) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Show loading state
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+                submitBtn.disabled = true;
+                
+                return true;
+            });
+            
+            // Helper functions
+            function showError(fieldId, message) {
+                const field = document.getElementById(fieldId);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'text-danger mt-1 small';
+                errorDiv.textContent = message;
+                field.classList.add('is-invalid');
+                field.parentNode.appendChild(errorDiv);
+            }
+            
+            function clearErrors() {
+                document.querySelectorAll('.text-danger').forEach(el => el.remove());
+                document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            }
+            
+            // Auto-hide flash messages
+            const flashMessages = document.querySelectorAll('.alert');
+            flashMessages.forEach(message => {
+                if (message.classList.contains('alert-success')) {
+                    setTimeout(() => {
+                        message.style.transition = 'opacity 0.5s';
+                        message.style.opacity = '0';
+                        setTimeout(() => message.remove(), 500);
+                    }, 5000);
+                }
+            });
+        });
+    </script>
 </body>
 </html> 

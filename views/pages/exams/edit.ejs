@@ -122,5 +122,107 @@
     
     <!-- Custom JavaScript -->
     <script src="/js/main.js"></script>
+    
+    <!-- Exam edit form JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            // Form validation
+            form.addEventListener('submit', function(e) {
+                const title = document.getElementById('title').value.trim();
+                const date = document.getElementById('date').value;
+                const type = document.getElementById('type').value;
+                
+                // Clear previous error messages
+                clearErrors();
+                
+                let hasErrors = false;
+                
+                // Validate title
+                if (!title) {
+                    showError('title', 'Exam title is required');
+                    hasErrors = true;
+                }
+                
+                // Validate date
+                if (!date) {
+                    showError('date', 'Exam date is required');
+                    hasErrors = true;
+                } else {
+                    const selectedDate = new Date(date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    
+                    if (selectedDate < today) {
+                        showError('date', 'Exam date cannot be in the past');
+                        hasErrors = true;
+                    }
+                }
+                
+                // Validate type
+                if (!type) {
+                    showError('type', 'Exam type is required');
+                    hasErrors = true;
+                }
+                
+                // Validate target classes
+                const targetClasses = document.getElementById('targetClasses');
+                if (targetClasses && targetClasses.selectedOptions.length === 0) {
+                    showError('targetClasses', 'Please select at least one target class');
+                    hasErrors = true;
+                }
+                
+                if (hasErrors) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Show loading state
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+                submitBtn.disabled = true;
+                
+                // Allow form submission
+                return true;
+            });
+            
+            // Helper functions
+            function showError(fieldId, message) {
+                const field = document.getElementById(fieldId);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'text-danger mt-1 small';
+                errorDiv.textContent = message;
+                field.classList.add('is-invalid');
+                field.parentNode.appendChild(errorDiv);
+            }
+            
+            function clearErrors() {
+                // Remove all error messages
+                document.querySelectorAll('.text-danger').forEach(el => el.remove());
+                document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            }
+            
+            // Auto-hide flash messages
+            const flashMessages = document.querySelectorAll('.alert');
+            flashMessages.forEach(message => {
+                if (message.classList.contains('alert-success')) {
+                    setTimeout(() => {
+                        message.style.transition = 'opacity 0.5s';
+                        message.style.opacity = '0';
+                        setTimeout(() => message.remove(), 500);
+                    }, 5000);
+                }
+            });
+            
+            // Date picker enhancement
+            const dateInput = document.getElementById('date');
+            if (dateInput) {
+                // Set minimum date to today
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.setAttribute('min', today);
+            }
+        });
+    </script>
 </body>
 </html> 

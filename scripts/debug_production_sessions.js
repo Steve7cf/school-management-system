@@ -173,12 +173,7 @@ app.get('/health', (req, res) => {
 });
 
 // Connect to MongoDB and start server
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
-})
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management')
 .then(() => {
   console.log('\n✅ Connected to MongoDB successfully');
   

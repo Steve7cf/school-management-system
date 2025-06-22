@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Exam Results - School Management System</title>
     
     <!-- Bootstrap 5.3.2 CSS -->
@@ -32,6 +35,9 @@
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h2 class="h3 mb-0">Exam Results</h2>
                         <div class="d-flex gap-2">
+                            <button class="btn btn-info" onclick="window.location.href='/results/refresh'" title="Refresh Data">
+                                <i class="fas fa-sync-alt me-2"></i>Refresh
+                            </button>
                             <button class="btn btn-success" onclick="exportResults()">
                                 <i class="fas fa-download me-2"></i>Export Results
                             </button>
@@ -42,6 +48,18 @@
                             <% } %>
                         </div>
                     </div>
+                    
+                    <!-- Debug Info (only for admin) -->
+                    <% if (user.role === 'admin') { %>
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>Debug Info:</strong> 
+                            Page loaded at: <%= new Date().toLocaleString() %> | 
+                            Total results: <%= results ? results.length : 0 %> |
+                            <button class="btn btn-sm btn-outline-info" onclick="checkDataFreshness()">Check Data Freshness</button>
+                        </small>
+                    </div>
+                    <% } %>
 
                     <!-- Search and Filter Section -->
                     <div class="card mb-4">
@@ -298,10 +316,33 @@
         }
 
         // Add event listeners
-        searchInput.addEventListener('input', filterResults);
-        classFilter.addEventListener('change', filterResults);
-        subjectFilter.addEventListener('change', filterResults);
-        gradeFilter.addEventListener('change', filterResults);
+        if (searchInput) searchInput.addEventListener('input', filterResults);
+        if (classFilter) classFilter.addEventListener('change', filterResults);
+        if (subjectFilter) subjectFilter.addEventListener('change', filterResults);
+        if (gradeFilter) gradeFilter.addEventListener('change', filterResults);
+
+        // Handle delete confirmation and form submission
+        const deleteForms = document.querySelectorAll('.delete-form');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const studentName = this.closest('tr').querySelector('td:first-child').textContent;
+                const subjectName = this.closest('tr').querySelector('td:nth-child(3)').textContent;
+                const resultId = this.action.split('/').pop();
+                
+                if (confirm(`Are you sure you want to delete the result for "${studentName}" in "${subjectName}"? This action cannot be undone.`)) {
+                    // Show loading state
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    submitBtn.disabled = true;
+                    
+                    // Submit the form
+                    this.submit();
+                }
+            });
+        });
 
         // Auto-calculate grade in modal
         const modal = document.getElementById('addResultModal');
@@ -334,6 +375,19 @@
             marksObtainedInput.addEventListener('input', calculateGrade);
             totalMarksInput.addEventListener('input', calculateGrade);
         }
+
+        // Add success/error message handling
+        const flashMessages = document.querySelectorAll('.alert');
+        flashMessages.forEach(message => {
+            // Auto-hide success messages after 5 seconds
+            if (message.classList.contains('alert-success')) {
+                setTimeout(() => {
+                    message.style.transition = 'opacity 0.5s';
+                    message.style.opacity = '0';
+                    setTimeout(() => message.remove(), 500);
+                }, 5000);
+            }
+        });
     });
 
     // Export Results Function
@@ -378,6 +432,39 @@
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+
+    // Check Data Freshness Function
+    function checkDataFreshness() {
+        const table = document.getElementById('resultsTable');
+        const rows = table.querySelectorAll('tbody tr');
+        
+        console.log('🔍 Checking data freshness...');
+        console.log(`📊 Total rows found: ${rows.length}`);
+        
+        let hasRecentData = false;
+        rows.forEach((row, index) => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 0) {
+                const studentName = cells[0]?.textContent.trim();
+                const grade = cells[4]?.textContent.trim();
+                console.log(`Row ${index + 1}: ${studentName} - Grade: ${grade}`);
+                
+                // Check if this looks like the updated data
+                if (grade === 'B') {
+                    hasRecentData = true;
+                    console.log(`✅ Found updated data: ${studentName} with grade ${grade}`);
+                }
+            }
+        });
+        
+        if (!hasRecentData) {
+            console.log('⚠️ No updated data found - page might be cached');
+            alert('No updated data found. The page might be showing cached data. Try refreshing the page.');
+        } else {
+            console.log('✅ Updated data found');
+            alert('Updated data found! The page is showing fresh data.');
+        }
     }
     </script>
 </body>

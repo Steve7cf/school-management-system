@@ -19,10 +19,7 @@ const adminData = {
 async function seedAdmin() {
     try {
         // Connect to MongoDB using connection string from .env
-        await mongoose.connect(MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management');
         console.log('✅ Connected to MongoDB using .env configuration');
         console.log('🔗 Database:', MONGODB_URI.split('@')[1]?.split('/')[0] || 'local database');
 

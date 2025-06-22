@@ -4,10 +4,7 @@ const Parent = require('./models/parent');
 const Student = require('./models/student');
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/school_management', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-});
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management');
 
 async function debugParentLogin() {
     try {
