@@ -73,13 +73,13 @@ const registerStudent = async (req, res) => {
     !section ||
     !gender
   ) {
-    req.flash("error", "All fields are required");
-    return res.status(401).redirect("/signup");
+    req.flash("info", ["All fields are required", "danger"]);
+    return res.redirect("/signup");
   }
 
   if (password !== confirmPassword) {
-    req.flash("error", "Passwords do not match");
-    return res.redirect("/register/student");
+    req.flash("info", ["Passwords do not match", "danger"]);
+    return res.redirect("/signup");
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -115,7 +115,25 @@ const registerStudent = async (req, res) => {
 
     res.redirect(`/registration-success?studentId=${encodeURIComponent(studentId)}`);
   } catch (error) {
-    return res.status(500).json({ message: "Whoops! internal server Errors" });
+    console.error('Student registration error:', error);
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      if (error.keyPattern && error.keyPattern.studentId) {
+        req.flash("info", ["Student ID generation failed. Please try again.", "danger"]);
+      } else if (error.keyPattern && error.keyPattern.email) {
+        req.flash("info", ["An account with this email already exists.", "danger"]);
+      } else {
+        req.flash("info", ["Account already exists with these details.", "danger"]);
+      }
+    } else if (error.name === 'ValidationError') {
+      const errorMessages = Object.values(error.errors).map(err => err.message);
+      req.flash("info", [errorMessages.join(', '), "danger"]);
+    } else {
+      req.flash("info", ["An error occurred during registration. Please try again.", "danger"]);
+    }
+    
+    return res.redirect("/signup");
   }
 };
 
@@ -231,22 +249,41 @@ const registerTeacher = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Generate unique teacherId
+    const year = new Date().getFullYear();
+    const random = Math.floor(1000 + Math.random() * 9000); // 4-digit random
+    const teacherId = `T${year}/${random}`;
+
     const newTeacher = new teacherModel({
       firstName,
       lastName,
       email,
+      teacherId,
       password: hashedPassword,
       subjects: [] // Subjects will be assigned by admin
     });
 
     await newTeacher.save();
-    await logEvent('teacher_registered', newTeacher._id, { email: newTeacher.email });
+    await logEvent('teacher_registered', newTeacher._id, { email: newTeacher.email, teacherId });
 
-    // Redirect to success page (no teacherId)
-    res.redirect(`/registration-success`);
+    // Redirect to success page with teacherId
+    res.redirect(`/registration-success?teacherId=${encodeURIComponent(teacherId)}`);
   } catch (error) {
     console.error('Teacher registration error:', error);
-    req.flash('info', ['An error occurred during registration.', 'danger']);
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      if (error.keyPattern && error.keyPattern.email) {
+        req.flash('info', ['An account with this email already exists.', 'danger']);
+      } else if (error.keyPattern && error.keyPattern.teacherId) {
+        req.flash('info', ['Teacher ID generation failed. Please try again.', 'danger']);
+      } else {
+        req.flash('info', ['Account already exists with these details.', 'danger']);
+      }
+    } else {
+      req.flash('info', ['An error occurred during registration. Please try again.', 'danger']);
+    }
+    
     res.redirect('/signup');
   }
 };

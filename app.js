@@ -11,6 +11,11 @@ const logger = require("morgan");
 const cookie = require("cookie-parser");
 const MongoStore = require("connect-mongo");
 const JWTService = require('./services/jwtService');
+const { handleError } = require('./services/errorService');
+
+// Setup uploads directory
+const setupUploads = require('./scripts/setup_uploads');
+setupUploads();
 
 // View engine setup
 app.set("view engine", "ejs");
@@ -43,51 +48,6 @@ app.use(
     })
   })
 );
-
-// Add session debugging middleware
-app.use((req, res, next) => {
-  // Log session creation and cookie setting
-  const originalEnd = res.end;
-  res.end = function(chunk, encoding) {
-    if (req.session && req.session.user) {
-      console.log(`🔐 Session created for user: ${req.session.user.role} - ${req.session.user.firstName || req.session.user.studentId || req.session.user.email}`);
-      console.log(`🍪 Session ID: ${req.sessionID}`);
-      console.log(`📅 Session expires: ${new Date(Date.now() + 60 * 60 * 1000).toISOString()}`);
-    }
-    originalEnd.call(this, chunk, encoding);
-  };
-  next();
-});
-
-// Enhanced cookie debugging middleware
-app.use((req, res, next) => {
-  // Log incoming cookies with detailed parsing info
-  if (req.headers.cookie) {
-    console.log(`🍪 Raw cookies: ${req.headers.cookie}`);
-    console.log(`🍪 Parsed cookies:`, req.cookies);
-    console.log(`🍪 Session cookie: ${req.cookies['connect.sid'] || 'Not found'}`);
-    
-    // Check cookie size
-    const cookieSize = Buffer.byteLength(req.headers.cookie, 'utf8');
-    console.log(`🍪 Cookie size: ${cookieSize} bytes`);
-    if (cookieSize > 4000) {
-      console.warn('⚠️  Large cookie detected - may cause issues');
-    }
-  } else {
-    console.log(`🍪 No incoming cookies`);
-  }
-  
-  // Intercept Set-Cookie headers
-  const originalSetHeader = res.setHeader;
-  res.setHeader = function(name, value) {
-    if (name.toLowerCase() === 'set-cookie') {
-      console.log(`🍪 Setting cookie: ${value}`);
-    }
-    return originalSetHeader.call(this, name, value);
-  };
-  
-  next();
-});
 
 // CORS configuration - must come after session
 app.use(cors())
@@ -191,6 +151,22 @@ app.use((req, res, next) => {
     
     next();
 });
+
+// 404 Error Handler
+app.use((req, res, next) => {
+    const suggestions = [
+        'Check if the URL is spelled correctly',
+        'Try navigating from the main menu',
+        'Make sure you are logged in if required',
+        'Contact support if the problem persists'
+    ];
+    
+    const errorUrl = `/error?status=404&title=Page Not Found&message=The page you are looking for does not exist.&suggestions=${encodeURIComponent(suggestions.join('|'))}&authenticated=${req.session && req.session.user ? 'true' : 'false'}`;
+    res.redirect(errorUrl);
+});
+
+// Global Error Handler
+app.use(handleError);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/school_management')

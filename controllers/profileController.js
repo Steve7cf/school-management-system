@@ -5,6 +5,7 @@ const Parent = require('../models/parent');
 const bcrypt = require('bcrypt');
 const { logEvent } = require('../services/logService');
 const fs = require('fs');
+const path = require('path');
 
 // Render profile page
 const getProfile = async (req, res) => {
@@ -137,12 +138,24 @@ const updateAvatar = async (req, res) => {
         }
         const user = await Model.findById(id);
 
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
+        }
+
         // Delete old avatar if it's not the default one and exists
-        const oldAvatarPath = 'public' + user.avatar;
-        if (user.avatar && !user.avatar.includes('_avatar.png') && !user.avatar.includes('user.png') && fs.existsSync(oldAvatarPath)) {
-            fs.unlink(oldAvatarPath, (err) => {
-                if (err) console.error("Error deleting old avatar:", err);
-            });
+        if (user.avatar && !user.avatar.includes('_avatar.png') && !user.avatar.includes('user.png')) {
+            const oldAvatarPath = path.join(__dirname, '..', 'public', user.avatar);
+            if (fs.existsSync(oldAvatarPath)) {
+                fs.unlink(oldAvatarPath, (err) => {
+                    if (err) console.error("Error deleting old avatar:", err);
+                });
+            }
+        }
+        
+        // Ensure the uploads directory exists
+        const uploadsDir = path.join(__dirname, '..', 'public', 'uploads', 'avatars');
+        if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
         }
         
         const newAvatarPath = '/uploads/avatars/' + req.file.filename;
@@ -157,7 +170,7 @@ const updateAvatar = async (req, res) => {
 
         res.json({ success: true, newAvatarPath });
     } catch (error) {
-        console.error(error);
+        console.error('Avatar update error:', error);
         res.status(500).json({ success: false, message: 'Server error during avatar upload.' });
     }
 };

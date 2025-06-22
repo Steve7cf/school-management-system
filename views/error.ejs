@@ -1,25 +1,266 @@
-<%- include('partials/navbar') %>
-
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <h1 class="text-danger mb-4">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </h1>
-                    <h2 class="card-title mb-4"><%= title %></h2>
-                    <p class="card-text mb-4"><%= message %></p>
-                    <a href="javascript:history.back()" class="btn btn-secondary me-2">
-                        <i class="fas fa-arrow-left"></i> Go Back
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .error-container {
+            max-width: 600px;
+            width: 100%;
+            margin: 20px;
+        }
+        
+        .error-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .error-header {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .error-body {
+            padding: 2rem;
+        }
+        
+        .error-code {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        
+        .error-message {
+            font-size: 1.2rem;
+            color: #6c757d;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .error-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #495057;
+            word-break: break-all;
+        }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+        }
+        
+        .btn-secondary-custom {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            border: none;
+            color: white;
+        }
+        
+        .btn-danger-custom {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border: none;
+            color: white;
+        }
+        
+        .error-suggestions {
+            background: #e8f4fd;
+            border-left: 4px solid #007bff;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .error-suggestions h5 {
+            color: #007bff;
+            margin-bottom: 0.5rem;
+        }
+        
+        .error-suggestions ul {
+            margin-bottom: 0;
+            padding-left: 1.5rem;
+        }
+        
+        .error-suggestions li {
+            margin-bottom: 0.25rem;
+        }
+        
+        .debug-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-card">
+            <div class="error-header">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h1 id="errorTitle">Oops! Something went wrong</h1>
+            </div>
+            
+            <div class="error-body">
+                <div class="error-code" id="errorCode">Error</div>
+                
+                <div class="error-message" id="errorMessage">
+                    We encountered an unexpected error. Please try again later.
+                </div>
+                
+                <div class="error-suggestions" id="errorSuggestions" style="display: none;">
+                    <h5><i class="fas fa-lightbulb me-2"></i>What you can try:</h5>
+                    <ul id="suggestionsList">
+                    </ul>
+                </div>
+                
+                <div class="debug-info" id="debugInfo" style="display: none;">
+                    <h6><i class="fas fa-bug me-2"></i>Debug Information (Development Only):</h6>
+                    <div class="error-details" id="debugDetails">
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <a href="javascript:history.back()" class="btn btn-secondary-custom btn-custom">
+                        <i class="fas fa-arrow-left me-2"></i>Go Back
                     </a>
-                    <a href="/dashboard" class="btn btn-primary">
-                        <i class="fas fa-home"></i> Go to Dashboard
+                    
+                    <a href="/" class="btn btn-primary-custom btn-custom" id="homeButton">
+                        <i class="fas fa-home me-2"></i>Go to Home
+                    </a>
+                    
+                    <a href="/login" class="btn btn-danger-custom btn-custom">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
                     </a>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<%- include('partials/footer') %> 
+    <!-- Bootstrap 5.3.2 Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Get error details from URL parameters or use defaults
+        const urlParams = new URLSearchParams(window.location.search);
+        const status = urlParams.get('status') || 'Error';
+        const title = urlParams.get('title') || 'Oops! Something went wrong';
+        const message = urlParams.get('message') || 'We encountered an unexpected error. Please try again later.';
+        const suggestions = urlParams.get('suggestions');
+        const debug = urlParams.get('debug');
+        const isAuthenticated = urlParams.get('authenticated') === 'true';
+        
+        // Update page content
+        document.getElementById('errorTitle').textContent = title;
+        document.getElementById('errorCode').textContent = status;
+        document.getElementById('errorMessage').textContent = message;
+        
+        // Update home button based on authentication
+        if (isAuthenticated) {
+            document.getElementById('homeButton').href = '/dashboard';
+            document.getElementById('homeButton').innerHTML = '<i class="fas fa-home me-2"></i>Go to Dashboard';
+        }
+        
+        // Show suggestions if provided
+        if (suggestions) {
+            const suggestionsList = suggestions.split('|');
+            const suggestionsListElement = document.getElementById('suggestionsList');
+            suggestionsList.forEach(suggestion => {
+                const li = document.createElement('li');
+                li.textContent = suggestion;
+                suggestionsListElement.appendChild(li);
+            });
+            document.getElementById('errorSuggestions').style.display = 'block';
+        }
+        
+        // Show debug info if provided and in development
+        if (debug && window.location.hostname === 'localhost') {
+            document.getElementById('debugDetails').textContent = decodeURIComponent(debug);
+            document.getElementById('debugInfo').style.display = 'block';
+        }
+        
+        // Update icon based on status
+        const iconElement = document.querySelector('.error-icon i');
+        if (status === '404') {
+            iconElement.className = 'fas fa-search';
+        } else if (status === '403') {
+            iconElement.className = 'fas fa-ban';
+        } else if (status === '500') {
+            iconElement.className = 'fas fa-exclamation-triangle';
+        }
+        
+        // Auto-redirect after 30 seconds for certain errors
+        if (status === '404' || status === '500') {
+            setTimeout(function() {
+                if (confirm('Would you like to go to the home page?')) {
+                    window.location.href = '/';
+                }
+            }, 30000);
+        }
+        
+        // Add animation when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const card = document.querySelector('.error-card');
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html> 

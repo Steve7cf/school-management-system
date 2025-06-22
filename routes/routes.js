@@ -29,28 +29,57 @@ const crypto = require('crypto')
 const attendanceController = require('../controllers/attendanceController');
 const profileController = require('../controllers/profileController');
 const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 // Setup multer for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/uploads/avatars/')
+        const uploadPath = path.join(__dirname, '..', 'public', 'uploads', 'avatars');
+        
+        // Ensure directory exists
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        
+        cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        cb(null, req.session.user.id + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop())
+        // Ensure user session exists
+        if (!req.session || !req.session.user || !req.session.user.id) {
+            return cb(new Error('User session not found'), null);
+        }
+        
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const fileExtension = file.originalname.split('.').pop().toLowerCase();
+        const filename = req.session.user.id + '-' + uniqueSuffix + '.' + fileExtension;
+        
+        cb(null, filename);
     }
 });
 
 const upload = multer({ 
     storage: storage,
     fileFilter: function (req, file, cb) {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only image files are allowed!'), false);
+        // Check file type
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Only image files are allowed!'), false);
         }
+        
+        // Check file extension
+        const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        const fileExtension = file.originalname.split('.').pop().toLowerCase();
+        
+        if (!allowedExtensions.includes(fileExtension)) {
+            return cb(new Error('Invalid file extension. Allowed: ' + allowedExtensions.join(', ')), false);
+        }
+        
+        cb(null, true);
     },
-    limits: { fileSize: 1024 * 1024 * 5 } // 5MB limit
+    limits: { 
+        fileSize: 1024 * 1024 * 5, // 5MB limit
+        files: 1 // Only allow 1 file
+    }
 });
 
 // Public routes
@@ -73,6 +102,11 @@ router.get("/registration-success", (req, res) => {
     teacherId: teacherId ? decodeURIComponent(teacherId) : undefined,
     layout: false 
   });
+})
+
+// Error page
+router.get("/error", (req, res) => {
+  res.render("error", { layout: false });
 })
 
 router.get("/admin/login", (req, res) => {res.render("admin-login", {info:req.flash('info')})})
