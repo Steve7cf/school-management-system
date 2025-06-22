@@ -224,15 +224,43 @@ router.get('/students/edit/:id', isAdmin, async (req, res) => {
 // Handle edit student POST
 router.post('/students/edit/:id', isAdmin, async (req, res) => {
     try {
-        const { firstName, lastName, dateOfBirth, section, studentId, address, subjects } = req.body;
+        const { 
+            firstName, 
+            lastName, 
+            dateOfBirth, 
+            section, 
+            studentId, 
+            address, 
+            subjects,
+            guardianName,
+            guardianRelation,
+            guardianPhone,
+            guardianEmail
+        } = req.body;
         
+        // Validate required fields
+        if (!firstName || !lastName || !dateOfBirth || !section || !studentId) {
+            req.flash('info', ['Please fill in all required fields.', 'danger']);
+            return res.redirect(`/students/edit/${req.params.id}`);
+        }
+
+        // Check if studentId is already taken by another student
+        const existingStudent = await Student.findOne({ 
+            studentId: studentId, 
+            _id: { $ne: req.params.id } 
+        });
+        if (existingStudent) {
+            req.flash('info', ['Student ID already exists. Please choose a different one.', 'danger']);
+            return res.redirect(`/students/edit/${req.params.id}`);
+        }
+
         const updateData = {
-            firstName,
-            lastName,
-            dateOfBirth,
-            section,
-            studentId,
-            address
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            dateOfBirth: dateOfBirth,
+            section: section.toUpperCase(),
+            studentId: studentId.trim(),
+            address: address ? address.trim() : ''
         };
 
         // Handle subjects if provided
@@ -241,14 +269,63 @@ router.post('/students/edit/:id', isAdmin, async (req, res) => {
             updateData.subjects = subjectIds.filter(s => s); // Remove empty values
         }
 
-        await Student.findByIdAndUpdate(req.params.id, updateData);
+        // Handle guardian information if provided
+        if (guardianName || guardianRelation || guardianPhone || guardianEmail) {
+            const guardianData = {};
+            
+            if (guardianName && guardianName.trim()) {
+                guardianData.name = guardianName.trim();
+            }
+            
+            if (guardianRelation && guardianRelation.trim()) {
+                guardianData.relation = guardianRelation.trim();
+            }
+            
+            if (guardianPhone && guardianPhone.trim()) {
+                guardianData.phone = guardianPhone.trim();
+            }
+            
+            if (guardianEmail && guardianEmail.trim()) {
+                guardianData.email = guardianEmail.trim();
+            }
+            
+            // Only add guardian field if we have at least one non-empty value
+            if (Object.keys(guardianData).length > 0) {
+                updateData.guardian = guardianData;
+            }
+        }
+
+        // Update the student
+        const updatedStudent = await Student.findByIdAndUpdate(
+            req.params.id, 
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedStudent) {
+            req.flash('info', ['Student not found.', 'danger']);
+            return res.redirect('/students');
+        }
+
+        // Update parent email if guardian email is provided
+        if (guardianEmail && guardianEmail.trim()) {
+            await Student.findByIdAndUpdate(
+                req.params.id,
+                { parentEmail: guardianEmail.trim() },
+                { new: true, runValidators: true }
+            );
+        }
+
+        await logEvent('student_updated', req.session.user.id, { 
+            studentId: updatedStudent.studentId,
+            studentName: `${updatedStudent.firstName} ${updatedStudent.lastName}`
+        });
         
-        await logEvent('student_updated', req.session.user.id, { studentId: req.params.id });
-        
-        req.flash('info', ['Student updated successfully', 'success']);
+        req.flash('info', ['Student updated successfully!', 'success']);
         res.redirect('/students');
     } catch (error) {
-        req.flash('info', ['Failed to update student.', 'danger']);
+        console.error('Error updating student:', error);
+        req.flash('info', ['Failed to update student. Please check all fields and try again.', 'danger']);
         res.redirect(`/students/edit/${req.params.id}`);
     }
 });
@@ -1320,12 +1397,15 @@ router.delete('/results/:id', isAdminOrTeacher, async (req, res) => {
 
 // Main attendance route (redirects based on role)
 router.get('/attendance', isAuthenticated, (req, res) => {
+    console.log('🟢 [DEBUG] /attendance session.user:', req.session.user);
     if (req.session.user.role === 'admin') {
         return res.redirect('/attendance/report');
     } else if (req.session.user.role === 'teacher') {
         return res.redirect('/attendance/take');
     } else if (req.session.user.role === 'student') {
         return res.redirect('/attendance/my-attendance');
+    } else if (req.session.user.role === 'parent') {
+        return res.redirect('/attendance/child-attendance');
     } else {
         req.flash('info', ['You do not have permission to view this page.', 'danger']);
         return res.redirect('/dashboard');
@@ -1407,6 +1487,48 @@ router.get('/attendance/class/:id', isAdmin, async (req, res) => {
     } catch (error) {
         req.flash('info', ['Failed to load class attendance.', 'danger']);
         res.redirect('/classes');
+    }
+});
+
+// Parent view child's attendance
+router.get('/attendance/child-attendance', isAuthenticated, isParent, async (req, res) => {
+    try {
+        const parent = await Parent.findById(req.session.user.id);
+        if (!parent || !parent.studentId) {
+            req.flash('info', ['Child information not found.', 'danger']);
+            return res.redirect('/dashboard');
+        }
+
+        const student = await Student.findOne({ studentId: parent.studentId });
+        if (!student) {
+            req.flash('info', ['Child student record not found.', 'danger']);
+            return res.redirect('/dashboard');
+        }
+
+        const attendanceRecords = await Attendance.find({ studentId: student._id })
+            .populate('subjectId', 'name')
+            .populate('teacherId', 'firstName lastName')
+            .sort({ date: -1 });
+
+        // Calculate attendance rate
+        let attendanceRate = 0;
+        if (attendanceRecords.length > 0) {
+            const presentCount = attendanceRecords.filter(record => record.status === 'Present').length;
+            attendanceRate = Math.round((presentCount / attendanceRecords.length) * 100);
+        }
+
+        res.render('pages/attendance/child', {
+            title: `${student.firstName} ${student.lastName}'s Attendance`,
+            user: req.session.user,
+            student,
+            attendanceRecords,
+            attendanceRate,
+            layout: false
+        });
+    } catch (error) {
+        console.error('Error fetching child attendance:', error);
+        req.flash('info', ['Error loading attendance data.', 'danger']);
+        res.redirect('/dashboard');
     }
 });
 
@@ -1618,7 +1740,7 @@ router.post('/announcements/:id/edit', isAuthenticated, async (req, res) => {
     }
 });
 
-// Delete announcement
+// Delete announcement (DELETE method)
 router.delete('/announcements/:id', isAuthenticated, async (req, res) => {
     try {
         const announcement = await Announcement.findById(req.params.id);
@@ -1627,21 +1749,65 @@ router.delete('/announcements/:id', isAuthenticated, async (req, res) => {
         }
 
         // Check if user has permission to delete
-        const user = req.session.user;
+        const user = req.session.user || res.locals.user;
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Authentication required' });
+        }
+
+        // Admin can delete any announcement, teachers can only delete their own
         if (user.role !== 'admin' && 
             (user.role !== 'teacher' || announcement.author.toString() !== user.id)) {
             return res.status(403).json({ success: false, message: 'Permission denied' });
         }
 
         await Announcement.findByIdAndDelete(req.params.id);
-        await logEvent('announcement_deleted', req.session.user.id, { 
+        await logEvent('announcement_deleted', user.id, { 
             announcementId: req.params.id, 
             title: announcement.title 
         });
         
-        res.json({ success: true });
+        res.json({ success: true, message: 'Announcement deleted successfully' });
     } catch (error) {
+        console.error('Error deleting announcement:', error);
         res.status(500).json({ success: false, message: 'Error deleting announcement' });
+    }
+});
+
+// Delete announcement (POST method - fallback)
+router.post('/announcements/:id/delete', isAuthenticated, async (req, res) => {
+    try {
+        const announcement = await Announcement.findById(req.params.id);
+        if (!announcement) {
+            req.flash('info', ['Announcement not found', 'danger']);
+            return res.redirect('/announcements');
+        }
+
+        // Check if user has permission to delete
+        const user = req.session.user || res.locals.user;
+        if (!user) {
+            req.flash('info', ['Authentication required', 'danger']);
+            return res.redirect('/login');
+        }
+
+        // Admin can delete any announcement, teachers can only delete their own
+        if (user.role !== 'admin' && 
+            (user.role !== 'teacher' || announcement.author.toString() !== user.id)) {
+            req.flash('info', ['Permission denied', 'danger']);
+            return res.redirect('/announcements');
+        }
+
+        await Announcement.findByIdAndDelete(req.params.id);
+        await logEvent('announcement_deleted', user.id, { 
+            announcementId: req.params.id, 
+            title: announcement.title 
+        });
+        
+        req.flash('info', ['Announcement deleted successfully', 'success']);
+        res.redirect('/announcements');
+    } catch (error) {
+        console.error('Error deleting announcement:', error);
+        req.flash('info', ['Error deleting announcement', 'danger']);
+        res.redirect('/announcements');
     }
 });
 
@@ -1809,7 +1975,7 @@ router.post('/results/add', isAdminOrTeacher, async (req, res) => {
 
 router.get('/attendance/take', isTeacher, async (req, res) => {
     try {
-        const teacher = await Teacher.findOne({ teacherId: req.session.user.teacherId }).populate('subjects');
+        const teacher = await Teacher.findById(req.session.user.id).populate('subjects');
         
         if (!teacher) {
             req.flash('info', ['Could not find your teacher profile.', 'danger']);
@@ -1844,7 +2010,7 @@ router.get('/attendance/fetch-students', isTeacher, async (req, res) => {
         const [gradeLevel, section] = classInfo.split('-');
 
         const students = await Student.find({ gradeLevel, section }).sort({ firstName: 1 });
-        const teacher = await Teacher.findOne({ teacherId: req.session.user.teacherId }).populate('subjects');
+        const teacher = await Teacher.findById(req.session.user.id).populate('subjects');
         
         if (!teacher) {
             req.flash('info', ['Could not find your teacher profile.', 'danger']);
@@ -1890,7 +2056,7 @@ router.post('/attendance/submit', isTeacher, async (req, res) => {
         const { subjectId, date, attendance } = req.body;
         const [gradeLevel, section] = req.body.class.split('-');
         
-        const teacher = await Teacher.findOne({ teacherId: req.session.user.teacherId });
+        const teacher = await Teacher.findById(req.session.user.id);
         const classObj = await Class.findOne({ gradeLevel: parseInt(gradeLevel), section });
 
         if (!teacher || !classObj) {

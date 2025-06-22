@@ -65,6 +65,29 @@ const studentSchema =  new mongoose.Schema({
     enum: ['Male', 'Female'],
     required: false
   },
+  guardian: {
+    name: {
+      type: String,
+      required: false,
+      trim: true
+    },
+    relation: {
+      type: String,
+      enum: ['Father', 'Mother', 'Guardian', ''],
+      required: false
+    },
+    phone: {
+      type: String,
+      required: false,
+      trim: true
+    },
+    email: {
+      type: String,
+      required: false,
+      lowercase: true,
+      trim: true
+    }
+  },
   subjects: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Subject'

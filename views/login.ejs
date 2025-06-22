@@ -3,151 +3,351 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ms</title>
-    <link rel="stylesheet" href="/css/bootstrap.min.css" />
-    <link rel="shortcut icon" href="/images/favicon.png" type="image/x-icon" />
+    <title>Login - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+        
+        .login-header h2 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        
+        .login-header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .login-body {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .form-control {
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            background: white;
+        }
+        
+        .input-group-text {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-right: none;
+            color: #6c757d;
+        }
+        
+        .input-group .form-control {
+            border-left: none;
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: white;
+            width: 100%;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .login-footer {
+            text-align: center;
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .login-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .login-footer a:hover {
+            color: #764ba2;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .school-logo {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 1.5rem;
+        }
+        
+        .role-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .role-option {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .role-option:hover {
+            border-color: #667eea;
+            background: #e8f2ff;
+        }
+        
+        .role-option.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .role-option input[type="radio"] {
+            display: none;
+        }
+        
+        .role-option i {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .role-option span {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+    </style>
   </head>
   <body>
-
-<section class="d-flex align-items-center py-5 bg-light" style="min-height: 100vh">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-xl-5 col-lg-6 col-md-8">
-        <div class="card shadow-lg rounded-3 border-0 overflow-hidden">
-          <div class="card-header bg-primary text-white py-3">
-            <div class="text-center">
-              <h2 class="fw-bold mb-0">Login to Your Account</h2>
+    <div class="container">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="school-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h2>Welcome Back</h2>
+                <p>Sign in to your account</p>
             </div>
-          </div>
-
-          <div class="card-body p-4 p-md-5">
-            <div class="text-center">
-              <% if (info && info.length > 0) { %>
-              <div class="alert alert-<%= info[1] %>"><%= info[0] %></div>
-              <% } %>
+            
+            <div class="login-body">
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <%= error %>
+                    </div>
+                <% } %>
+                
+                <% if (typeof success !== 'undefined' && success) { %>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <%= success %>
+                    </div>
+                <% } %>
+                
+                <div class="role-selector">
+                    <label class="role-option" for="role-student">
+                        <input type="radio" id="role-student" name="role" value="student" required>
+                        <i class="fas fa-user-graduate"></i>
+                        <span>Student</span>
+                    </label>
+                    <label class="role-option" for="role-teacher">
+                        <input type="radio" id="role-teacher" name="role" value="teacher">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>Teacher</span>
+                    </label>
+                    <label class="role-option" for="role-parent">
+                        <input type="radio" id="role-parent" name="role" value="parent">
+                        <i class="fas fa-users"></i>
+                        <span>Parent</span>
+                    </label>
+                </div>
+                <form id="login-form" action="/login/student" method="POST">
+                    <div class="form-group">
+                        <label for="loginField" class="form-label" id="loginFieldLabel">
+                            <i class="fas fa-id-card me-2"></i>Student ID
+                        </label>
+                        <input type="text" class="form-control" id="loginField" name="studentId" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock me-2"></i>Password
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <span class="input-group-text" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-login">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In as Student
+                    </button>
+                </form>
             </div>
-            <!-- Role Selection Tabs -->
-            <ul class="nav nav-pills nav-fill mb-4" id="loginRoleTabs" role="tablist">
-              <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="student-login-tab" data-bs-toggle="pill" data-bs-target="#student-login" type="button" role="tab">
-                  <i class="bi bi-person-video2 me-2"></i> Student
-                </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="parent-login-tab" data-bs-toggle="pill" data-bs-target="#parent-login" type="button" role="tab">
-                  <i class="bi bi-people-fill me-2"></i> Parent
-                </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="teacher-login-tab" data-bs-toggle="pill" data-bs-target="#teacher-login" type="button" role="tab">
-                  <i class="bi bi-person-badge me-2"></i> Teacher
-                </button>
-              </li>
-            </ul>
-
-            <!-- Form Content -->
-            <div class="tab-content" id="loginRoleTabsContent">
-              <!-- Student Login Form -->
-              <div class="tab-pane fade show active" id="student-login" role="tabpanel">
-                <form id="studentLoginForm" method="post" action="/login/student">
-                  <div class="mb-3">
-                    <label for="studentId" class="form-label">Student ID</label>
-                    <input type="text" class="form-control" id="studentId" name="studentId" required style="text-transform: uppercase;">
-                  </div>
-                  <div class="mb-3">
-                    <label for="studentPassword" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="studentPassword" name="password" required>
-                  </div>
-                  <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="rememberStudent">
-                    <label class="form-check-label" for="rememberStudent">Remember me</label>
-                  </div>
-                  <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary py-2 fw-bold">Login as Student</button>
-                  </div>
-                </form>
-              </div>
-
-              <!-- Parent Login Form -->
-              <div class="tab-pane fade" id="parent-login" role="tabpanel">
-                <form id="parentLoginForm" method="post" action="/login/parent">
-                  <div class="mb-3">
-                    <label for="parentEmail" class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="parentEmail" name="email" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="parentPassword" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="parentPassword" name="password" required>
-                  </div>
-                  <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="rememberParent">
-                    <label class="form-check-label" for="rememberParent">Remember me</label>
-                  </div>
-                  <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary py-2 fw-bold">Login as Parent</button>
-                  </div>
-                </form>
-              </div>
-
-              <!-- Teacher Login Form -->
-              <div class="tab-pane fade" id="teacher-login" role="tabpanel">
-                <form id="teacherLoginForm" method="post" action="/login/teacher">
-                  <div class="mb-3">
-                    <label for="teacherEmail" class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="teacherEmail" name="email" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="teacherPassword" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="teacherPassword" name="password" required>
-                  </div>
-                  <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="rememberTeacher">
-                    <label class="form-check-label" for="rememberTeacher">Remember me</label>
-                  </div>
-                  <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary py-2 fw-bold">Login as Teacher</button>
-                  </div>
-                </form>
-              </div>
-
-              <!-- Admin Login Form -->
-              <div class="tab-pane fade" id="admin-login" role="tabpanel">
-                <form id="adminLoginForm" method="post" action="/login/admin">
-                  <div class="mb-3">
-                    <label for="adminEmail" class="form-label">Email Address</label>
-                    <input type="email" class="form-control" id="adminEmail" name="email" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="adminPassword" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="adminPassword" name="password" required>
-                  </div>
-                  <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" id="rememberAdmin">
-                    <label class="form-check-label" for="rememberAdmin">Remember me</label>
-                  </div>
-                  <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary py-2 fw-bold">Login as Admin</button>
-                  </div>
-                </form>
-              </div>
+            
+            <div class="login-footer">
+                <p class="mb-2">Don't have an account? <a href="/signup">Sign up here</a></p>
+                <p class="mb-0"><a href="/forgot-password">Forgot your password?</a></p>
             </div>
-
-            <div class="text-center mt-4">
-              <p class="mb-1">
-                <a href="/forgot-password" class="text-primary">Forgot password?</a>
-              </p>
-              <p class="mb-0">
-                Don't have an account? 
-                <a href="/signup" class="text-primary fw-semibold">Sign up here</a>
-              </p>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
-</section>
 
-<script src="/js/bootstrap.bundle.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Role selector functionality
+        document.querySelectorAll('.role-option input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                console.log('Role changed to:', this.value);
+                
+                // Remove active class from all options
+                document.querySelectorAll('.role-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+                
+                // Add active class to selected option
+                if (this.checked) {
+                    this.closest('.role-option').classList.add('active');
+                    
+                    // Change form action based on role
+                    const form = document.getElementById('login-form');
+                    const loginField = document.getElementById('loginField');
+                    const loginFieldLabel = document.getElementById('loginFieldLabel');
+                    let newAction = '';
+                    
+                    if (this.value === 'student') {
+                        newAction = '/login/student';
+                        loginFieldLabel.innerHTML = '<i class="fas fa-id-card me-2"></i>Student ID';
+                        loginField.name = 'studentId';
+                        loginField.type = 'text';
+                        loginField.placeholder = 'Enter Student ID (e.g., F1/2024/1234)';
+                    } else if (this.value === 'teacher') {
+                        newAction = '/login/teacher';
+                        loginFieldLabel.innerHTML = '<i class="fas fa-envelope me-2"></i>Email Address';
+                        loginField.name = 'email';
+                        loginField.type = 'email';
+                        loginField.placeholder = 'Enter your email address';
+                    } else if (this.value === 'parent') {
+                        newAction = '/login/parent';
+                        loginFieldLabel.innerHTML = '<i class="fas fa-envelope me-2"></i>Email Address';
+                        loginField.name = 'email';
+                        loginField.type = 'email';
+                        loginField.placeholder = 'Enter your email address';
+                    }
+                    
+                    form.action = newAction;
+                    console.log('Form action changed to:', newAction);
+                    
+                    // Show visual feedback
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    submitBtn.innerHTML = `<i class="fas fa-sign-in-alt me-2"></i>Sign In as ${this.value.charAt(0).toUpperCase() + this.value.slice(1)}`;
+                }
+            });
+        });
+        
+        // Default to student if none selected
+        document.getElementById('role-student').checked = true;
+        document.getElementById('role-student').dispatchEvent(new Event('change'));
+        
+        function togglePassword() {
+            const passwordField = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+    </script>
+  </body>
 </html>

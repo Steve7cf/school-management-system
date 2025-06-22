@@ -147,28 +147,25 @@
                                 </h5>
                                 <div class="row g-3">
                                     <div class="col-md-6">
-                                        <label class="form-label">Parent/Guardian Name *</label>
-                                        <input type="text" name="guardianName" class="form-control" value="<%= student.guardian && student.guardian.name ? student.guardian.name : '' %>" required>
-                                        <div class="invalid-feedback">Please provide parent/guardian name.</div>
+                                        <label class="form-label">Parent/Guardian Name</label>
+                                        <input type="text" name="guardianName" class="form-control" value="<%= student.guardian && student.guardian.name ? student.guardian.name : '' %>">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Relationship *</label>
-                                        <select name="guardianRelation" class="form-select" required>
+                                        <label class="form-label">Relationship</label>
+                                        <select name="guardianRelation" class="form-select">
                                             <option value="">Select Relationship</option>
                                             <option value="Father" <%= student.guardian && student.guardian.relation === 'Father' ? 'selected' : '' %>>Father</option>
                                             <option value="Mother" <%= student.guardian && student.guardian.relation === 'Mother' ? 'selected' : '' %>>Mother</option>
                                             <option value="Guardian" <%= student.guardian && student.guardian.relation === 'Guardian' ? 'selected' : '' %>>Guardian</option>
                                         </select>
-                                        <div class="invalid-feedback">Please select a relationship.</div>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Parent/Guardian Phone *</label>
-                                        <input type="tel" name="guardianPhone" class="form-control" value="<%= student.guardian && student.guardian.phone ? student.guardian.phone : '' %>" required>
-                                        <div class="invalid-feedback">Please provide parent/guardian phone.</div>
+                                        <label class="form-label">Parent/Guardian Phone</label>
+                                        <input type="tel" name="guardianPhone" class="form-control" value="<%= student.guardian && student.guardian.phone ? student.guardian.phone : '' %>">
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label">Parent/Guardian Email</label>
-                                        <input type="email" name="guardianEmail" class="form-control" value="<%= student.guardian && student.guardian.email ? student.guardian.email : '' %>">
+                                        <label class="form-label">Parent/Guardian Email *</label>
+                                        <input type="email" name="guardianEmail" class="form-control" value="<%= parent ? parent.email : (student.guardian && student.guardian.email ? student.guardian.email : student.parentEmail || '') %>" required>
                                         <div class="invalid-feedback">Please provide a valid email address.</div>
                                     </div>
                                 </div>

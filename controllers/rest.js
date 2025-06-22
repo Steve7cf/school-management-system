@@ -230,30 +230,22 @@ const registerTeacher = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    
-    // Generate a unique teacher ID
-    const lastTeacher = await teacherModel.findOne().sort({ createdAt: -1 });
-    let newTeacherId = 'T1001';
-    if (lastTeacher && lastTeacher.teacherId) {
-        const lastId = parseInt(lastTeacher.teacherId.substring(1));
-        newTeacherId = 'T' + (lastId + 1);
-    }
 
     const newTeacher = new teacherModel({
       firstName,
       lastName,
       email,
       password: hashedPassword,
-      teacherId: newTeacherId,
       subjects: [] // Subjects will be assigned by admin
     });
 
     await newTeacher.save();
-    await logEvent('teacher_registered', newTeacher._id, { teacherId: newTeacher.teacherId });
+    await logEvent('teacher_registered', newTeacher._id, { email: newTeacher.email });
 
-    req.flash('info', ['Teacher account created successfully! Please log in.', 'success']);
-    res.redirect('/login');
+    // Redirect to success page (no teacherId)
+    res.redirect(`/registration-success`);
   } catch (error) {
+    console.error('Teacher registration error:', error);
     req.flash('info', ['An error occurred during registration.', 'danger']);
     res.redirect('/signup');
   }
@@ -297,8 +289,7 @@ const authTeacher = async (req, res) => {
       id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
-      teacherId: user.teacherId,
-      role: role
+      role: 'teacher'
     };
 
     // Set authentication cookies

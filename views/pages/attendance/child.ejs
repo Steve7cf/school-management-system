@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-content {
+            padding: 2rem;
+            margin-left: 0;
+            transition: margin-left 0.3s;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+            padding: 1rem 1.5rem;
+            position: relative;
+        }
+        
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-header h6 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .btn {
+            border-radius: 10px;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease;
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            background: white;
+        }
+        
+        .table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 1rem;
+            position: relative;
+        }
+        
+        .table thead th::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .table tbody td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+            transition: all 0.3s ease;
+        }
+        
+        .table tbody tr {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+            transform: scale(1.01);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .table tbody tr:hover td {
+            color: #667eea;
+        }
+        
+        .badge {
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .badge:hover::before {
+            left: 100%;
+        }
+        
+        .bg-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        }
+        
+        .bg-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%) !important;
+        }
+        
+        .bg-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+            color: #212529 !important;
+        }
+        
+        .bg-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+        }
+        
+        .text-primary {
+            color: #667eea !important;
+        }
+        
+        .text-success {
+            color: #28a745 !important;
+        }
+        
+        .border-left-success {
+            border-left: 4px solid #28a745 !important;
+            position: relative;
+        }
+        
+        .border-left-success::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .border-left-danger {
+            border-left: 4px solid #dc3545 !important;
+            position: relative;
+        }
+        
+        .border-left-danger::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .border-left-warning {
+            border-left: 4px solid #ffc107 !important;
+            position: relative;
+        }
+        
+        .border-left-warning::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .text-gray-800 {
+            color: #5a5c69 !important;
+        }
+        
+        .text-gray-300 {
+            color: #dddfeb !important;
+        }
+        
+        .text-xs {
+            font-size: 0.7rem;
+        }
+        
+        .font-weight-bold {
+            font-weight: 700 !important;
+        }
+        
+        .text-uppercase {
+            text-transform: uppercase;
+        }
+        
+        .h5 {
+            font-size: 1.25rem;
+        }
+        
+        .h3 {
+            font-size: 1.75rem;
+        }
+        
+        .h1 {
+            font-size: 2.5rem;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .alert::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: currentColor;
+            opacity: 0.3;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+        
+        .opacity-75 {
+            opacity: 0.75;
+        }
+        
+        .opacity-50 {
+            opacity: 0.5;
+        }
+        
+        .shadow {
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15) !important;
+        }
+        
+        .text-muted {
+            color: #858796 !important;
+        }
+        
+        .list-group-item {
+            border: none;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-group-item:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+            transform: translateX(5px);
+        }
+        
+        .btn-outline-primary {
+            color: #667eea;
+            border-color: #667eea;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: #667eea;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 8px;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .d-flex {
+            display: flex !important;
+        }
+        
+        .justify-content-between {
+            justify-content: space-between !important;
+        }
+        
+        .align-items-center {
+            align-items: center !important;
+        }
+        
+        .me-2 {
+            margin-right: 0.5rem !important;
+        }
+        
+        .me-3 {
+            margin-right: 1rem !important;
+        }
+        
+        .mb-0 {
+            margin-bottom: 0 !important;
+        }
+        
+        .mb-1 {
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .mb-3 {
+            margin-bottom: 1rem !important;
+        }
+        
+        .mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+        
+        .mt-4 {
+            margin-top: 1.5rem !important;
+        }
+        
+        .py-2 {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+        
+        .py-3 {
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+        }
+        
+        .py-4 {
+            padding-top: 1.5rem !important;
+            padding-bottom: 1.5rem !important;
+        }
+        
+        .p-0 {
+            padding: 0 !important;
+        }
+        
+        .rounded-circle {
+            border-radius: 50% !important;
+        }
+        
+        .fw-bold {
+            font-weight: 700 !important;
+        }
+        
+        .text-capitalize {
+            text-transform: capitalize !important;
+        }
+        
+        .text-reset {
+            color: inherit !important;
+        }
+        
+        .d-none {
+            display: none !important;
+        }
+        
+        .d-sm-inline {
+            display: inline !important;
+        }
+        
+        .d-inline {
+            display: inline !important;
+        }
+        
+        .d-sm-none {
+            display: none !important;
+        }
+        
+        .d-md-block {
+            display: block !important;
+        }
+        
+        .d-none.d-md-block {
+            display: block !important;
+        }
+        
+        .d-inline.d-sm-none {
+            display: none !important;
+        }
+        
+        .d-none.d-sm-inline {
+            display: inline !important;
+        }
+        
+        .container-fluid {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+        
+        .row {
+            margin-left: -0.75rem;
+            margin-right: -0.75rem;
+        }
+        
+        .col-12, .col-md-4, .col-md-6 {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+        
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .no-gutters {
+            margin-right: 0;
+            margin-left: 0;
+        }
+        
+        .no-gutters > .col,
+        .no-gutters > [class*="col-"] {
+            padding-right: 0;
+            padding-left: 0;
+        }
+        
+        .mr-2 {
+            margin-right: 0.5rem !important;
+        }
+        
+        .col-auto {
+            flex: 0 0 auto;
+            width: auto;
+            max-width: 100%;
+        }
+        
+        .fa-2x {
+            font-size: 2em;
+        }
+        
+        .fa-3x {
+            font-size: 3em;
+        }
+        
+        .small {
+            font-size: 80%;
+        }
+        
+        .h-100 {
+            height: 100% !important;
+        }
+        
+        .w-100 {
+            width: 100% !important;
+        }
+        
+        .text-white {
+            color: #fff !important;
+        }
+        
+        .text-dark {
+            color: #343a40 !important;
+        }
+        
+        .bg-light {
+            background-color: #f8f9fa !important;
+        }
+        
+        .navbar-dark {
+            background-color: #343a40 !important;
+        }
+        
+        .bg-primary {
+            background-color: #667eea !important;
+        }
+        
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+        }
+        
+        .navbar-toggler {
+            border: none;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+        
+        .offcanvas {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .offcanvas-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .nav-link {
+            color: #5a5c69;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin: 0.25rem 0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.3s ease;
+        }
+        
+        .nav-link:hover::before {
+            left: 100%;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            transform: translateX(5px);
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .nav-link.text-danger {
+            color: #dc3545 !important;
+        }
+        
+        .nav-link.text-danger:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+        
+        .btn-close {
+            background: transparent;
+            border: 0;
+            color: white;
+        }
+        
+        .btn-close:hover {
+            color: rgba(255, 255, 255, 0.75);
+        }
+        
+        /* Enhanced animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
+        }
+        
+        /* Apply animations to elements */
+        .card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        
+        .card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+        
+        .table tbody tr {
+            animation: slideInLeft 0.5s ease-out;
+        }
+        
+        .table tbody tr:nth-child(1) { animation-delay: 0.1s; }
+        .table tbody tr:nth-child(2) { animation-delay: 0.2s; }
+        .table tbody tr:nth-child(3) { animation-delay: 0.3s; }
+        .table tbody tr:nth-child(4) { animation-delay: 0.4s; }
+        .table tbody tr:nth-child(5) { animation-delay: 0.5s; }
+        
+        /* Loading state */
+        .loading {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200px 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        /* Enhanced hover effects */
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .badge:hover {
+            animation: pulse 0.6s ease-in-out;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+        
+        /* Enhanced mobile responsiveness */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+            
+            .btn-sm {
+                padding: 0.2rem 0.4rem;
+                font-size: 0.8rem;
+            }
+            
+            .card-header h6 {
+                font-size: 1rem;
+            }
+            
+            .h3 {
+                font-size: 1.5rem;
+            }
+            
+            .table thead th,
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+            }
+            
+            .badge {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .container-fluid {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+            }
+            
+            .table-responsive {
+                font-size: 0.8rem;
+            }
+            
+            .btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                background: white !important;
+            }
+            
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+            
+            .btn {
+                display: none !important;
+            }
+            
+            .navbar {
+                display: none !important;
+            }
+        }
+        
+        /* Focus styles for accessibility */
+        .btn:focus,
+        .nav-link:focus {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+        
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .card {
+                border: 2px solid #000;
+            }
+            
+            .btn {
+                border: 2px solid currentColor;
+            }
+        }
+        
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Top Navbar with toggler -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Offcanvas Sidebar -->
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <!-- Flash Messages -->
+        <% if (typeof info !== 'undefined' && info.length > 0) { %>
+            <div class="alert alert-<%= info[1] || 'info' %> alert-dismissible fade show" role="alert">
+                <%= info[0] %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+        
+        <!-- Page Header -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-clipboard-check me-2"></i>
+                <%= student.firstName %> <%= student.lastName %>'s Attendance
+            </h1>
+            <a href="/dashboard" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Student Information Card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Student Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><%= student.firstName %> <%= student.lastName %></h5>
+                                <p class="text-muted mb-1">Student ID: <%= student.studentId %></p>
+                                <p class="text-muted mb-1">Class: Grade <%= student.gradeLevel %> - Section <%= student.section %></p>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <h4 class="text-primary"><%= attendanceRate %>%</h4>
+                                            <small class="text-muted">Overall Attendance Rate</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <h4 class="text-success"><%= attendanceRecords.length %></h4>
+                                            <small class="text-muted">Total Records</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Records Table -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Attendance History</h6>
+            </div>
+            <div class="card-body">
+                <% if (attendanceRecords.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Subject</th>
+                                    <th>Teacher</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% attendanceRecords.forEach(record => { %>
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-calendar me-2"></i>
+                                            <%= new Date(record.date).toLocaleDateString() %>
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-book me-2"></i>
+                                            <%= record.subjectId ? record.subjectId.name : 'N/A' %>
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-chalkboard-teacher me-2"></i>
+                                            <%= record.teacherId ? `${record.teacherId.firstName} ${record.teacherId.lastName}` : 'N/A' %>
+                                        </td>
+                                        <td>
+                                            <% if (record.status === 'Present') { %>
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>Present
+                                                </span>
+                                            <% } else if (record.status === 'Absent') { %>
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times me-1"></i>Absent
+                                                </span>
+                                            <% } else if (record.status === 'Late') { %>
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock me-1"></i>Late
+                                                </span>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-question me-1"></i><%= record.status %>
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="viewAttendanceDetails('<%= record._id %>')"
+                                                    title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No attendance records found</h5>
+                        <p class="text-muted">Attendance records will appear here once teachers start taking attendance.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Attendance Statistics -->
+        <% if (attendanceRecords.length > 0) { %>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Present Days
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        <%= attendanceRecords.filter(r => r.status === 'Present').length %>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-check fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-left-danger shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                        Absent Days
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        <%= attendanceRecords.filter(r => r.status === 'Absent').length %>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-times fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        Late Days
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                        <%= attendanceRecords.filter(r => r.status === 'Late').length %>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    function viewAttendanceDetails(recordId) {
+        // You can implement a modal or redirect to show detailed attendance information
+        alert('Attendance details for record: ' + recordId);
+        // For now, just show an alert. You can enhance this later with a modal or detailed view
+    }
+    </script>
+</body>
+</html> 

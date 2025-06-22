@@ -137,8 +137,8 @@ async function getStudentDashboardData(studentId) {
 }
 
 // Helper function to get teacher dashboard data
-async function getTeacherDashboardData(teacherId) {
-  const teacher = await Teacher.findOne({ teacherId: teacherId }).populate('subjects');
+async function getTeacherDashboardData(teacherDbId) {
+  const teacher = await Teacher.findById(teacherDbId).populate('subjects');
   
   // Count students based on teacher's assigned classes
   let studentCount = 0;
@@ -249,7 +249,7 @@ exports.studentDashboard = async (req, res) => {
 // Teacher dashboard controller
 exports.teacherDashboard = async (req, res) => {
     try {
-        const data = await getTeacherDashboardData(req.session.user.teacherId);
+        const data = await getTeacherDashboardData(req.session.user.id);
         
         res.render('pages/dashboard/teacher', {
             title: 'Teacher Dashboard',

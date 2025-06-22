@@ -182,37 +182,94 @@
                         </h6>
                     </div>
                     <div class="card-body">
-                        <% if (parent) { %>
-                            <div class="d-flex align-items-center mb-4">
-                                <img src="<%= parent.avatar || '/images/parent_avatar.png' %>" 
-                                     alt="Parent" 
-                                     class="rounded-circle me-3" 
-                                     style="width: 60px; height: 60px; object-fit: cover;">
-                                <div>
-                                    <h5 class="mb-1 text-primary"><%= parent.firstName %> <%= parent.lastName %></h5>
-                                    <p class="text-muted mb-0">
-                                        <i class="fas fa-envelope me-1"></i><%= parent.email %>
-                                    </p>
+                        <div class="mb-4">
+                            <h5 class="text-primary border-bottom pb-2">
+                                <i class="fas fa-users me-2"></i>Parent/Guardian Information
+                            </h5>
+                            <% if (parent) { %>
+                                <div class="d-flex align-items-center mb-4">
+                                    <img src="<%= parent.avatar || '/images/parent_avatar.png' %>" 
+                                         alt="Parent" 
+                                         class="rounded-circle me-3" 
+                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                    <div>
+                                        <h5 class="mb-1 text-primary"><%= parent.firstName %> <%= parent.lastName %></h5>
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-envelope me-1"></i><%= parent.email %>
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label text-muted fw-bold">Phone Number</label>
-                                    <p class="form-control-static fs-5">
-                                        <% if (parent.phone) { %>
-                                            <i class="fas fa-phone me-2"></i><%= parent.phone %>
-                                        <% } else { %>
-                                            Not Set
-                                        <% } %>
-                                    </p>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted fw-bold">Phone Number</label>
+                                        <p class="form-control-static fs-5">
+                                            <% if (parent.phone) { %>
+                                                <i class="fas fa-phone me-2"></i><%= parent.phone %>
+                                            <% } else { %>
+                                                Not Set
+                                            <% } %>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted fw-bold">Address</label>
+                                        <p class="form-control-static fs-5">
+                                            <% if (parent.address) { %>
+                                                <i class="fas fa-map-marker-alt me-2"></i><%= parent.address %>
+                                            <% } else { %>
+                                                Not Set
+                                            <% } %>
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        <% } else { %>
-                            <div class="text-center py-4">
-                                <i class="fas fa-user-friends fa-2x text-muted mb-3"></i>
-                                <p class="text-muted">No parent/guardian assigned</p>
-                            </div>
-                        <% } %>
+                            <% } else if (student.guardian) { %>
+                                <div class="d-flex align-items-center mb-4">
+                                    <img src="/images/parent_avatar.png" 
+                                         alt="Guardian" 
+                                         class="rounded-circle me-3" 
+                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                    <div>
+                                        <h5 class="mb-1 text-primary"><%= student.guardian.name %></h5>
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-user-tag me-1"></i><%= student.guardian.relation %>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted fw-bold">Email</label>
+                                        <p class="form-control-static fs-5">
+                                            <% if (student.guardian.email) { %>
+                                                <i class="fas fa-envelope me-2"></i><%= student.guardian.email %>
+                                            <% } else { %>
+                                                Not Set
+                                            <% } %>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted fw-bold">Phone Number</label>
+                                        <p class="form-control-static fs-5">
+                                            <% if (student.guardian.phone) { %>
+                                                <i class="fas fa-phone me-2"></i><%= student.guardian.phone %>
+                                            <% } else { %>
+                                                Not Set
+                                            <% } %>
+                                        </p>
+                                    </div>
+                                </div>
+                            <% } else if (student.parentEmail) { %>
+                                <div class="text-center py-4">
+                                    <i class="fas fa-envelope fa-2x text-muted mb-3"></i>
+                                    <h6 class="text-muted">Parent/Guardian Email</h6>
+                                    <p class="fs-5"><%= student.parentEmail %></p>
+                                    <small class="text-muted">No additional parent details available</small>
+                                </div>
+                            <% } else { %>
+                                <div class="text-center py-4">
+                                    <i class="fas fa-user-friends fa-2x text-muted mb-3"></i>
+                                    <p class="text-muted">No parent/guardian assigned</p>
+                                </div>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
             </div>
