@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const cookieParser = require('cookie-parser');
+const axios = require('axios');
 
 console.log('🔍 Cookie Issue Debug Tool');
 console.log('==========================');
@@ -201,4 +202,78 @@ app.listen(port, () => {
   console.log('   2. Check if cookies are being set');
   console.log('   3. Verify session persistence');
   console.log('   4. Look for any cookie-related errors');
-}); 
+});
+
+async function debugCookieIssue() {
+    const client = axios.create({
+        baseURL: 'http://localhost:3000',
+        withCredentials: true,
+        maxRedirects: 0,
+        validateStatus: function (status) {
+            return status >= 200 && status < 400; // Accept redirects
+        }
+    });
+
+    try {
+        console.log('🔍 Debugging Cookie Issue...\n');
+
+        // Step 1: Check initial state
+        console.log('1. Initial state...');
+        console.log('   🍪 Initial cookies:', client.defaults.headers.Cookie || 'None');
+
+        // Step 2: Login and capture response
+        console.log('\n2. Attempting login...');
+        const loginResponse = await client.post('/login/admin', {
+            email: 'admin@school.com',
+            password: 'admin123'
+        });
+        console.log('   📊 Login Status:', loginResponse.status);
+        console.log('   📍 Login Redirect:', loginResponse.headers.location);
+        
+        // Check Set-Cookie headers
+        const setCookieHeaders = loginResponse.headers['set-cookie'];
+        if (setCookieHeaders) {
+            console.log('   🍪 Set-Cookie headers:');
+            setCookieHeaders.forEach((cookie, index) => {
+                console.log(`      ${index + 1}. ${cookie}`);
+            });
+        } else {
+            console.log('   ❌ No Set-Cookie headers found');
+        }
+
+        // Step 3: Check if cookies were set in client
+        console.log('\n3. Checking client cookies after login...');
+        console.log('   🍪 Client cookies:', client.defaults.headers.Cookie || 'None');
+
+        // Step 4: Try to manually set cookies if they were in headers
+        if (setCookieHeaders) {
+            console.log('\n4. Manually setting cookies from headers...');
+            const cookieStrings = setCookieHeaders.map(cookie => cookie.split(';')[0]);
+            client.defaults.headers.Cookie = cookieStrings.join('; ');
+            console.log('   🍪 Manually set cookies:', client.defaults.headers.Cookie);
+        }
+
+        // Step 5: Test dashboard access
+        console.log('\n5. Testing dashboard access...');
+        try {
+            const dashboardResponse = await client.get('/dashboard/admin');
+            console.log('   📊 Dashboard Status:', dashboardResponse.status);
+            console.log('   📍 Dashboard Redirect:', dashboardResponse.headers.location);
+        } catch (error) {
+            console.log('   ❌ Dashboard access failed');
+            console.log('   📊 Error Status:', error.response?.status);
+            console.log('   📍 Error Redirect:', error.response?.headers?.location);
+        }
+
+        console.log('\n🎉 Cookie debug completed!');
+
+    } catch (error) {
+        console.error('❌ Debug failed:', error.message);
+        if (error.response) {
+            console.error('   Status:', error.response.status);
+            console.error('   Headers:', error.response.headers);
+        }
+    }
+}
+
+debugCookieIssue(); 

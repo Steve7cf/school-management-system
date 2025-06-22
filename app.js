@@ -10,7 +10,7 @@ const helmet = require("helmet");
 const logger = require("morgan");
 const cookie = require("cookie-parser");
 const MongoStore = require("connect-mongo");
-const jwt = require("jsonwebtoken");
+const JWTService = require('./services/jwtService');
 
 // View engine setup
 app.set("view engine", "ejs");
@@ -31,8 +31,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: isProduction && process.env.FORCE_HTTPS !== 'false', // Only secure in production with HTTPS
+      sameSite: isProduction ? 'lax' : 'lax', // Use 'lax' for better compatibility
       maxAge: 60 * 60 * 1000, // 1 hour
       domain: domain
     },
@@ -124,22 +124,43 @@ app.use((req, res, next) => {
     const token = req.cookies.token;
     if (token) {
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret');
+        const decoded = JWTService.verifyToken(token);
         
         // Validate required fields
         if (decoded._id && decoded.role) {
+          // Get user info from cookie or decode from token
+          let userInfo = null;
+          if (req.cookies.userInfo) {
+            try {
+              userInfo = JSON.parse(req.cookies.userInfo);
+            } catch (e) {
+              // If userInfo cookie is invalid, use token data
+              userInfo = {
+                id: decoded._id,
+                role: decoded.role,
+                email: decoded.email
+              };
+            }
+          } else {
+            // Fallback to token data
+            userInfo = {
+              id: decoded._id,
+              role: decoded.role,
+              email: decoded.email
+            };
+          }
+
           // Set user info in res.locals for template access
-          res.locals.user = {
-            id: decoded._id,
-            role: decoded.role,
-            email: decoded.email,
-            studentId: decoded.studentId
-          };
+          res.locals.user = userInfo;
+          
+          // Also set in session for consistency
+          req.session.user = userInfo;
         }
       } catch (error) {
         // Invalid token - clear it
         res.clearCookie('token');
         res.clearCookie('userInfo');
+        res.locals.user = null;
       }
     } else {
       res.locals.user = null;

@@ -18,8 +18,8 @@ const setAuthCookies = (res, user, token) => {
   // Set JWT token as HTTP-only cookie
   res.cookie('token', token, {
     httpOnly: true,
-    secure: isProduction, // Must be true in production for HTTPS
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction && process.env.FORCE_HTTPS !== 'false', // Only secure in production with HTTPS
+    sameSite: isProduction ? 'lax' : 'lax', // Use 'lax' for better compatibility
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     path: '/',
     domain: domain,
@@ -39,8 +39,8 @@ const setAuthCookies = (res, user, token) => {
 
   res.cookie('userInfo', JSON.stringify(userInfo), {
     httpOnly: false, // Allow client-side access
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction && process.env.FORCE_HTTPS !== 'false', // Only secure in production with HTTPS
+    sameSite: isProduction ? 'lax' : 'lax', // Use 'lax' for better compatibility
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     path: '/',
     domain: domain,
@@ -574,8 +574,8 @@ const logout = async (req, res) => {
     // Clear JWT token cookie
     res.clearCookie('token', {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: isProduction && process.env.FORCE_HTTPS !== 'false',
+      sameSite: isProduction ? 'lax' : 'lax',
       path: '/',
       domain: domain
     });
@@ -583,8 +583,8 @@ const logout = async (req, res) => {
     // Clear user info cookie
     res.clearCookie('userInfo', {
       httpOnly: false,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: isProduction && process.env.FORCE_HTTPS !== 'false',
+      sameSite: isProduction ? 'lax' : 'lax',
       path: '/',
       domain: domain
     });
@@ -592,8 +592,8 @@ const logout = async (req, res) => {
     // Clear session cookie
     res.clearCookie('connect.sid', {
       httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
+      secure: isProduction && process.env.FORCE_HTTPS !== 'false',
+      sameSite: isProduction ? 'lax' : 'lax',
       path: '/',
       domain: domain
     });
