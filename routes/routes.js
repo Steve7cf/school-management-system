@@ -2178,4 +2178,28 @@ router.get('/results/refresh', isAuthenticated, async (req, res) => {
     }
 });
 
+// Chat routes
+const chatController = require('../controllers/chatController');
+
+// Get conversations list
+router.get('/chat', isAuthenticated, chatController.getConversations);
+
+// Get specific chat conversation
+router.get('/chat/:conversationId', isAuthenticated, chatController.getChat);
+
+// Get messages for a conversation (JSON API)
+router.get('/chat/:conversationId/messages', isAuthenticated, chatController.getConversationMessages);
+
+// Send message
+router.post('/chat/send', isAuthenticated, chatController.sendMessage);
+
+// Get unread message count
+router.get('/chat/unread-count', isAuthenticated, chatController.getUnreadCount);
+
+// Mark message as read
+router.put('/chat/message/:messageId/read', isAuthenticated, chatController.markAsRead);
+
+// Delete message
+router.delete('/chat/message/:messageId', isAuthenticated, chatController.deleteMessage);
+
 module.exports = router;

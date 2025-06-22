@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - School Management System</title>
+    
+    <!-- Bootstrap 5.3.2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.5.1 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/dashboard.css" rel="stylesheet">
+    
+    <style>
+        .chat-container {
+            height: calc(100vh - 200px);
+            display: flex;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+        
+        .conversations-sidebar {
+            width: 350px;
+            border-right: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+        }
+        
+        .conversations-header {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            background-color: white;
+        }
+        
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .conversation-item {
+            padding: 1rem;
+            border-bottom: 1px solid #f1f3f4;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .conversation-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .conversation-item.active {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .conversation-item.unread {
+            background-color: #e3f2fd;
+        }
+        
+        .chat-header {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+            background-color: white;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background-color: #f8f9fa;
+        }
+        
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 1px solid #dee2e6;
+            background-color: white;
+        }
+        
+        .message {
+            margin-bottom: 1rem;
+            display: flex;
+        }
+        
+        .message.sent {
+            justify-content: flex-end;
+        }
+        
+        .message.received {
+            justify-content: flex-start;
+        }
+        
+        .message-bubble {
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            word-wrap: break-word;
+        }
+        
+        .message.sent .message-bubble {
+            background-color: #007bff;
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+        }
+        
+        .message.received .message-bubble {
+            background-color: white;
+            color: #212529;
+            border: 1px solid #dee2e6;
+            border-bottom-left-radius: 0.25rem;
+        }
+        
+        .message-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #007bff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .unread-badge {
+            background-color: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            min-width: 1.5rem;
+            text-align: center;
+        }
+        
+        .no-conversation {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6c757d;
+        }
+        
+        .no-conversation i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .main-content {
+            padding-top: 1rem;
+        }
+        .list-group-item-primary {
+            font-weight: bold;
+        }
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Top Navbar with toggler -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <a class="navbar-brand fw-bold" href="/dashboard">
+                <span class="d-none d-sm-inline">School Management System</span>
+                <span class="d-inline d-sm-none">SMS</span>
+            </a>
+            
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-light btn-sm me-2" id="refreshBtn" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                    <i class="fas fa-plus me-1"></i>New Chat
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Offcanvas Sidebar -->
+    <%- include('../../partials/offcanvas-sidebar') %>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-content">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">Conversations</h5>
+                    </div>
+                    <div class="list-group list-group-flush" id="conversationsList">
+                        <% if (conversations && conversations.length > 0) { %>
+                            <% conversations.forEach(conv => { %>
+                                <a href="#" class="list-group-item list-group-item-action conversation-item <%= conv.unreadCount > 0 ? 'list-group-item-primary' : '' %>" 
+                                     data-bs-toggle="modal" data-bs-target="#chatModal"
+                                     data-conversation-id="<%= conv.conversationId %>"
+                                     data-other-participant='<%- JSON.stringify(conv.otherParticipant) %>'>
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1"><%= conv.otherParticipant.firstName %> <%= conv.otherParticipant.lastName %> (<%= conv.otherParticipant.role %>)</h6>
+                                        <small class="text-muted"><%= new Date(conv.lastMessage.createdAt).toLocaleDateString() %></small>
+                                    </div>
+                                    <p class="mb-1 text-muted small">
+                                        <strong><%= conv.lastMessage.sender._id.toString() === user.id ? 'You:' : conv.lastMessage.sender.firstName + ':' %></strong>
+                                        <%= conv.lastMessage.message.length > 40 ? conv.lastMessage.message.substring(0, 40) + '...' : conv.lastMessage.message %>
+                                    </p>
+                                    <% if (conv.unreadCount > 0) { %>
+                                        <span class="badge bg-danger rounded-pill float-end"><%= conv.unreadCount %></span>
+                                    <% } %>
+                                </a>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="text-center py-5">
+                                <i class="fas fa-comments fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">No conversations yet</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chatModalLabel">Chat</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="chatModalBody">
+                    <!-- Messages will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <form id="messageForm" class="d-flex w-100">
+                        <input type="text" class="form-control me-2" id="messageInput" placeholder="Type a message..." autocomplete="off">
+                        <button type="submit" class="btn btn-primary" id="sendButton">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Chat Modal -->
+    <div class="modal fade" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newChatModalLabel">Start New Chat</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newChatForm">
+                        <div class="mb-3">
+                            <label for="recipientSelect" class="form-label">Select Recipient</label>
+                            <select class="form-select" id="recipientSelect" required>
+                                <option value="" disabled selected>Choose a person...</option>
+                                <% if (recipients && recipients.length > 0) { %>
+                                    <% recipients.forEach(recipient => { %>
+                                        <option value='<%= JSON.stringify({ id: recipient._id, role: recipient.role }) %>'>
+                                            <%= recipient.firstName %> <%= recipient.lastName %> (<%= recipient.role %>)
+                                        </option>
+                                    <% }) %>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newMessageInput" class="form-label">Message</label>
+                            <textarea class="form-control" id="newMessageInput" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chatModalElement = document.getElementById('chatModal');
+            const chatModal = new bootstrap.Modal(chatModalElement);
+            const chatModalTitle = document.getElementById('chatModalLabel');
+            const chatModalBody = document.getElementById('chatModalBody');
+            const messageForm = document.getElementById('messageForm');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            
+            let currentConversationId = null;
+            let currentParticipant = null;
+
+            // Event listener for showing the chat modal
+            chatModalElement.addEventListener('show.bs.modal', async function (event) {
+                const button = event.relatedTarget;
+                currentConversationId = button.getAttribute('data-conversation-id');
+                currentParticipant = JSON.parse(button.getAttribute('data-other-participant'));
+
+                // Update modal title
+                chatModalTitle.textContent = `Chat with ${currentParticipant.firstName} ${currentParticipant.lastName}`;
+                
+                // Show loading spinner
+                chatModalBody.innerHTML = '<div class="text-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+                // Fetch and render messages
+                await loadMessages();
+            });
+
+            // Function to load and render messages
+            async function loadMessages() {
+                try {
+                    const response = await fetch(`/chat/${currentConversationId}/messages`);
+                    if (!response.ok) throw new Error('Failed to fetch messages.');
+
+                    const data = await response.json();
+                    if (data.success) {
+                        renderMessages(data.messages);
+                    } else {
+                        chatModalBody.innerHTML = `<p class="text-center text-danger">Error: ${data.message}</p>`;
+                    }
+                } catch (error) {
+                    console.error('Error fetching messages:', error);
+                    chatModalBody.innerHTML = `<p class="text-center text-danger">Could not load chat. Please try again.</p>`;
+                }
+            }
+
+            // Function to render messages in the modal body
+            function renderMessages(messages) {
+                chatModalBody.innerHTML = '';
+                if (!messages || messages.length === 0) {
+                    chatModalBody.innerHTML = '<p class="text-center text-muted mt-3">No messages in this conversation yet.</p>';
+                    return;
+                }
+
+                messages.forEach(msg => {
+                    const isSent = msg.sender._id.toString() === '<%= user.id %>';
+                    const messageHtml = `
+                        <div class="d-flex justify-content-${isSent ? 'end' : 'start'} mb-2">
+                            <div class="card" style="max-width: 80%;">
+                                <div class="card-body p-2 ${isSent ? 'bg-primary text-white' : 'bg-light'}">
+                                    <p class="card-text small mb-0">${msg.message}</p>
+                                    <small class="d-block text-end ${isSent ? 'text-white-50' : 'text-muted'}">${new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    chatModalBody.insertAdjacentHTML('beforeend', messageHtml);
+                });
+                
+                // Scroll to the bottom
+                chatModalBody.scrollTop = chatModalBody.scrollHeight;
+            }
+
+            // Event listener for sending a message
+            messageForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const message = messageInput.value.trim();
+                if (!message || !currentConversationId || !currentParticipant) return;
+
+                sendButton.disabled = true;
+                sendButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                try {
+                    const response = await fetch('/chat/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            message,
+                            conversationId: currentConversationId,
+                            receiverId: currentParticipant._id,
+                            receiverRole: currentParticipant.role
+                        }),
+                        credentials: 'include'
+                    });
+
+                    if (!response.ok) throw new Error('Failed to send message.');
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        messageInput.value = '';
+                        renderMessages( (await (await fetch(`/chat/${currentConversationId}/messages`)).json()).messages );
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    alert('An error occurred while sending the message.');
+                } finally {
+                    sendButton.disabled = false;
+                    sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
+                }
+            });
+
+            // New chat form submission
+            const newChatForm = document.getElementById('newChatForm');
+            newChatForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const recipientData = JSON.parse(document.getElementById('recipientSelect').value);
+                const message = document.getElementById('newMessageInput').value.trim();
+
+                if (!recipientData || !message) {
+                    alert('Please select a recipient and write a message.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/chat/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({
+                            message: message,
+                            receiverId: recipientData.id,
+                            receiverRole: recipientData.role
+                        }),
+                        credentials: 'include'
+                    });
+
+                    if (!response.ok) throw new Error('Failed to start new chat.');
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        location.reload(); // Reload to show the new conversation
+                    } else {
+                        alert('Error starting new chat: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error starting new chat:', error);
+                    alert('An error occurred while starting the new chat.');
+                }
+            });
+            
+            // Refresh button
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                location.reload();
+            });
+        });
+    </script>
+</body>
+</html> 

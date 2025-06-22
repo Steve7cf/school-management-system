@@ -28,6 +28,14 @@
         <% if (["admin", "teacher", "student", "parent"].includes(user.role)) { %>
           <li class="nav-item"><a class="nav-link <%= path.startsWith('/attendance') ? 'active' : '' %>" href="/attendance"><i class="fas fa-calendar-check me-2"></i> Attendance</a></li>
         <% } %>
+        <!-- Chat Navigation for all user types -->
+        <li class="nav-item">
+          <a class="nav-link <%= path.startsWith('/chat') ? 'active' : '' %>" href="/chat">
+            <i class="fas fa-comments me-2"></i> 
+            Chat
+            <span id="chatUnreadBadge" class="badge bg-danger ms-auto" style="display: none;"></span>
+          </a>
+        </li>
         <li class="nav-item"><a class="nav-link <%= path.startsWith('/exams') ? 'active' : '' %>" href="/exams"><i class="fas fa-file-alt me-2"></i> Exams</a></li>
         <li class="nav-item"><a class="nav-link <%= path.startsWith('/results') ? 'active' : '' %>" href="/results"><i class="fas fa-chart-bar me-2"></i> Results</a></li>
         <% if (user.role === 'admin') { %>
@@ -41,4 +49,37 @@
       <% } %>
     </ul>
   </div>
-</div> 
+</div>
+
+<script>
+// Update chat unread count in sidebar
+async function updateChatUnreadCount() {
+    try {
+        const response = await fetch('/chat/unread-count', { credentials: 'include' });
+        if (!response.ok) {
+            // If response is not JSON, it might be a redirect (e.g., to login)
+            // We can just stop and not show an error
+            return;
+        }
+        const data = await response.json();
+        const unreadBadge = document.getElementById('chatUnreadBadge');
+        
+        if (data.unreadCount > 0) {
+            unreadBadge.textContent = data.unreadCount;
+            unreadBadge.style.display = 'inline-block'; // Use inline-block for better alignment
+        } else {
+            unreadBadge.style.display = 'none';
+        }
+    } catch (error) {
+        // This can happen if the response is not valid JSON (e.g. login page)
+        // We can safely ignore it in this case.
+        console.log('Could not fetch unread count, user might be logged out.');
+    }
+}
+
+// Update unread count every 30 seconds
+setInterval(updateChatUnreadCount, 30000);
+
+// Initial update
+document.addEventListener('DOMContentLoaded', updateChatUnreadCount);
+</script> 
