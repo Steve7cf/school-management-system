@@ -96,35 +96,7 @@ router.get('/dashboard/teacher', isAuthenticated, isTeacher, dashboardController
 router.get('/dashboard/parent', isAuthenticated, isParent, dashboardController.parentDashboard)
 
 // Logout route
-router.get("/logout", (req, res) => {
-  const user = req.session.user; // Capture user before destroying session
-  const isProduction = process.env.NODE_ENV === "production";
-  const domain = process.env.DOMAIN || undefined;
-  
-  req.session.destroy(err => {
-    if (err) {
-      console.error("Session destruction error:", err);
-      // Even with an error, we should probably redirect to a safe page
-      return res.redirect('/'); 
-    }
-
-    if (user) {
-      logEvent('logout', user.id, { role: user.role });
-    } else {
-      logEvent('logout', 'unknown', { role: 'unknown' });
-    }
-    
-    // Clear the session cookie with proper options for production
-    res.clearCookie('connect.sid', {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-      path: '/',
-      domain: domain
-    }); 
-    res.redirect("/login");
-  });
-})
+router.get("/logout", rest.logout)
 
 // --- STUDENT ROUTES ---
 // NOTE: Specific routes must come before dynamic routes (e.g., /students/create before /students/:id)

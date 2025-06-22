@@ -36,13 +36,13 @@ app.use(
     resave: false,
     rolling: true, // Extend session on each request
     cookie: {
-      maxAge: 60 * 60 * 1000, // 1 hour
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours (increased from 1 hour)
       sameSite: isProduction ? "none" : "lax",
       httpOnly: true,
       secure: isProduction, // Must be true in production for HTTPS
       path: '/',
       domain: domain, // Only set if DOMAIN env var is provided
-      expires: new Date(Date.now() + 60 * 60 * 1000) // Explicit expiration
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000) // Explicit expiration
     },
     name: 'connect.sid', // Explicitly set session cookie name
     unset: 'destroy' // Destroy session when unset

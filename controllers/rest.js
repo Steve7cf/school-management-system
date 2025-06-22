@@ -8,6 +8,47 @@ const gradeModel = require("../models/grade");
 const Admin = require("../models/admin");
 const Subject = require('../models/Subject');
 const { logEvent } = require('../services/logService');
+const JWTService = require('../services/jwtService');
+
+// Helper function to set authentication cookies
+const setAuthCookies = (res, user, token) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  const domain = process.env.DOMAIN || undefined;
+  
+  // Set JWT token as HTTP-only cookie
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: isProduction, // Must be true in production for HTTPS
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    path: '/',
+    domain: domain,
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
+  });
+
+  // Set user info cookie (non-sensitive data only)
+  const userInfo = {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    role: user.role,
+    ...(user.studentId && { studentId: user.studentId }),
+    ...(user.teacherId && { teacherId: user.teacherId }),
+    ...(user.email && { email: user.email })
+  };
+
+  res.cookie('userInfo', JSON.stringify(userInfo), {
+    httpOnly: false, // Allow client-side access
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    path: '/',
+    domain: domain,
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000)
+  });
+
+  console.log(`🍪 Authentication cookies set for ${user.role}: ${user.firstName || user.studentId || user.email}`);
+};
 
 // register student
 const registerStudent = async (req, res) => {
@@ -250,6 +291,13 @@ const authTeacher = async (req, res) => {
       return res.redirect("/login");
     }
 
+    // Generate JWT token
+    const token = JWTService.generateToken({
+      _id: user._id,
+      email: user.email,
+      role: role
+    });
+
     // Set up session
     req.session.user = {
       id: user._id,
@@ -258,6 +306,9 @@ const authTeacher = async (req, res) => {
       teacherId: user.teacherId,
       role: role
     };
+
+    // Set authentication cookies
+    setAuthCookies(res, req.session.user, token);
 
     // Force session save before redirect
     req.session.save((err) => {
@@ -269,6 +320,7 @@ const authTeacher = async (req, res) => {
       
       console.log(`🔐 Teacher login successful: ${user.email}`);
       console.log(`🍪 Session ID: ${req.sessionID}`);
+      console.log(`🎫 JWT Token generated: ${token.substring(0, 20)}...`);
       
       logEvent('login', user.email, { role: 'teacher' });
       return res.redirect("/dashboard/teacher");
@@ -305,6 +357,13 @@ const authStudent = async (req, res) => {
       return res.redirect("/login");
     }
 
+    // Generate JWT token
+    const token = JWTService.generateToken({
+      _id: user._id,
+      studentId: user.studentId,
+      role: 'student'
+    });
+
     // Set up session
     req.session.user = {
       id: user._id,
@@ -314,6 +373,9 @@ const authStudent = async (req, res) => {
       gradeLevel: user.gradeLevel,
       role: 'student'
     };
+
+    // Set authentication cookies
+    setAuthCookies(res, req.session.user, token);
 
     // Force session save before redirect
     req.session.save((err) => {
@@ -325,6 +387,7 @@ const authStudent = async (req, res) => {
       
       console.log(`🔐 Student login successful: ${user.studentId}`);
       console.log(`🍪 Session ID: ${req.sessionID}`);
+      console.log(`🎫 JWT Token generated: ${token.substring(0, 20)}...`);
       
       logEvent('login', user.studentId, { role: 'student' });
       return res.redirect("/dashboard/student");
@@ -371,6 +434,13 @@ const authParent = async (req, res) => {
       return res.redirect("/login");
     }
 
+    // Generate JWT token
+    const token = JWTService.generateToken({
+      _id: user._id,
+      email: user.email,
+      role: 'parent'
+    });
+
     // Set up session
     req.session.user = {
       id: user._id,
@@ -380,6 +450,9 @@ const authParent = async (req, res) => {
       role: 'parent',
       studentId: user.studentId
     };
+
+    // Set authentication cookies
+    setAuthCookies(res, req.session.user, token);
 
     // Force session save before redirect
     req.session.save((err) => {
@@ -391,6 +464,7 @@ const authParent = async (req, res) => {
       
       console.log(`🔐 Parent login successful: ${user.email}`);
       console.log(`🍪 Session ID: ${req.sessionID}`);
+      console.log(`🎫 JWT Token generated: ${token.substring(0, 20)}...`);
       
       logEvent('login', email, { role: 'parent', studentId: user.studentId });
       return res.redirect("/dashboard/parent");
@@ -425,6 +499,13 @@ const authAdmin = async (req, res) => {
       return res.redirect('/login');
     }
 
+    // Generate JWT token
+    const token = JWTService.generateToken({
+      _id: admin._id,
+      email: admin.email,
+      role: 'admin'
+    });
+
     // Set up session
     req.session.user = {
       id: admin._id,
@@ -434,7 +515,10 @@ const authAdmin = async (req, res) => {
       role: 'admin',
     };
 
-    // Force session save and ensure cookie is set
+    // Set authentication cookies
+    setAuthCookies(res, req.session.user, token);
+
+    // Force session save before redirect
     req.session.save((err) => {
       if (err) {
         console.error('Session save error:', err);
@@ -444,43 +528,15 @@ const authAdmin = async (req, res) => {
       
       console.log(`🔐 Admin login successful: ${admin.email}`);
       console.log(`🍪 Session ID: ${req.sessionID}`);
+      console.log(`🎫 JWT Token generated: ${token.substring(0, 20)}...`);
       
-      // Ensure cookie is set by regenerating session
-      req.session.regenerate((err) => {
-        if (err) {
-          console.error('Session regeneration error:', err);
-          req.flash('info', ['Session error', 'danger']);
-          return res.redirect('/login');
-        }
-        
-        // Set user data again after regeneration
-        req.session.user = {
-          id: admin._id,
-          firstName: admin.firstName,
-          lastName: admin.lastName,
-          email: admin.email,
-          role: 'admin',
-        };
-        
-        // Save the regenerated session
-        req.session.save((err) => {
-          if (err) {
-            console.error('Regenerated session save error:', err);
-            req.flash('info', ['Session error', 'danger']);
-            return res.redirect('/login');
-          }
-          
-          console.log(`✅ Session regenerated and saved: ${req.sessionID}`);
-          
-          logEvent('login', email, { role: 'admin' });
-          
-          // Set additional headers for debugging
-          res.setHeader('X-Session-ID', req.sessionID);
-          res.setHeader('X-User-Role', 'admin');
-          
-          res.redirect('/dashboard/admin');
-        });
-      });
+      logEvent('login', email, { role: 'admin' });
+      
+      // Set additional headers for debugging
+      res.setHeader('X-Session-ID', req.sessionID);
+      res.setHeader('X-User-Role', 'admin');
+      
+      res.redirect('/dashboard/admin');
     });
   } catch (error) {
     console.error(error);
@@ -534,6 +590,63 @@ const addGrade = async (req, res) => {
   }
 };
 
+// Logout function that clears all authentication cookies
+const logout = async (req, res) => {
+  try {
+    // Clear session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Session destruction error:', err);
+      }
+    });
+
+    // Clear authentication cookies
+    const isProduction = process.env.NODE_ENV === "production";
+    const domain = process.env.DOMAIN || undefined;
+
+    // Clear JWT token cookie
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+      domain: domain
+    });
+
+    // Clear user info cookie
+    res.clearCookie('userInfo', {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+      domain: domain
+    });
+
+    // Clear session cookie
+    res.clearCookie('connect.sid', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
+      path: '/',
+      domain: domain
+    });
+
+    console.log('🔓 User logged out - all cookies cleared');
+    
+    // Log the logout event if user info is available
+    if (req.session && req.session.user) {
+      logEvent('logout', req.session.user.email || req.session.user.studentId, { 
+        role: req.session.user.role 
+      });
+    }
+
+    res.redirect('/login');
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.redirect('/login');
+  }
+};
+
 module.exports = {
   authStudent,
   authParent,
@@ -544,4 +657,5 @@ module.exports = {
   registerTeacher,
   announcement,
   addGrade,
+  logout,
 };

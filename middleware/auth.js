@@ -1,9 +1,55 @@
 // Session-based authentication middleware
+const JWTService = require('../services/jwtService');
+
 const isAuthenticated = (req, res, next) => {
+    // First check session-based authentication
     if (req.session && req.session.user) {
         return next();
     }
+    
+    // If no session, check JWT token from cookies
+    const token = req.cookies.token;
+    if (token) {
+        try {
+            const decoded = JWTService.verifyToken(token);
+            // Set user info in session for compatibility
+            req.session.user = {
+                id: decoded.id,
+                email: decoded.email,
+                role: decoded.role
+            };
+            return next();
+        } catch (error) {
+            console.log('JWT verification failed:', error.message);
+            // Clear invalid token
+            res.clearCookie('token');
+        }
+    }
+    
     res.redirect('/login');
+};
+
+// JWT-specific authentication middleware for API routes
+const isAuthenticatedJWT = (req, res, next) => {
+    const token = JWTService.getTokenFromHeader(req) || req.cookies.token;
+    
+    if (!token) {
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Access token required' 
+        });
+    }
+    
+    try {
+        const decoded = JWTService.verifyToken(token);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        return res.status(401).json({ 
+            success: false, 
+            message: 'Invalid or expired token' 
+        });
+    }
 };
 
 const isAdmin = (req, res, next) => {
@@ -85,6 +131,7 @@ function isTeacherOrAdmin(req, res, next) {
 
 module.exports = {
     isAuthenticated,
+    isAuthenticatedJWT,
     isAdmin,
     isTeacher,
     isStudent,
