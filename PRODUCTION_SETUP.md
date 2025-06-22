@@ -131,11 +131,3 @@ node scripts/debug_login.js
 
 ### Example .env for Production
 
-```env
-NODE_ENV=production
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/school_management
-SESSION_SECRET=your_very_long_random_secret_key_here_make_it_at_least_32_characters
-DOMAIN=your-domain.com
-FRONTEND_URL=https://your-domain.com
-PORT=4000
-``` 
