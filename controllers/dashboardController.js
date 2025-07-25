@@ -120,9 +120,9 @@ async function getStudentDashboardData(studentId) {
 
   // Calculate attendance rate from Attendance model
   let attendanceRate = 0;
-  const totalAttendance = await Attendance.countDocuments({ student: student._id });
+  const totalAttendance = await Attendance.countDocuments({ studentId: student._id });
   if (totalAttendance > 0) {
-    const presentCount = await Attendance.countDocuments({ student: student._id, status: 'Present' });
+    const presentCount = await Attendance.countDocuments({ studentId: student._id, status: 'Present' });
     attendanceRate = Math.round((presentCount / totalAttendance) * 100);
   }
 
@@ -213,9 +213,9 @@ async function getParentDashboardData(studentId) {
   // Calculate attendance rate from Attendance model
   let attendanceRate = 0;
   if (student) {
-    const totalAttendance = await Attendance.countDocuments({ student: student._id });
+    const totalAttendance = await Attendance.countDocuments({ studentId: student._id });
     if (totalAttendance > 0) {
-      const presentCount = await Attendance.countDocuments({ student: student._id, status: 'Present' });
+      const presentCount = await Attendance.countDocuments({ studentId: student._id, status: 'Present' });
       attendanceRate = Math.round((presentCount / totalAttendance) * 100);
     }
   }

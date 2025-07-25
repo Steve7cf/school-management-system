@@ -8,7 +8,7 @@ const viewStudentAttendance = async (req, res) => {
             return res.status(404).send('Student not found');
         }
 
-        const attendanceRecords = await Attendance.find({ student: student._id })
+        const attendanceRecords = await Attendance.find({ studentId: student._id })
             .populate('subjectId')
             .sort({ date: -1 });
 
@@ -36,7 +36,7 @@ const viewStudentAttendance = async (req, res) => {
 exports.getStudentAttendance = async (req, res) => {
     try {
         const student = await Student.findById(req.params.studentId);
-        const attendance = await Attendance.find({ student: req.params.studentId }).populate('subject');
+        const attendance = await Attendance.find({ studentId: req.params.studentId }).populate('subject');
         res.render('pages/attendance/student', {
             title: 'Student Attendance',
             student,
