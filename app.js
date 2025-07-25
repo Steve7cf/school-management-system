@@ -37,8 +37,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: isProduction && process.env.FORCE_HTTPS !== "false", // Only secure in production with HTTPS
-      sameSite: isProduction ? "lax" : "lax", // Use 'lax' for better compatibility
+      secure: isProduction ? true : false, // Always secure in production
+      sameSite: isProduction ? "none" : "lax", // 'none' for cross-site cookies in production
       maxAge: 60 * 60 * 1000, // 1 hour
       domain: domain,
     },
