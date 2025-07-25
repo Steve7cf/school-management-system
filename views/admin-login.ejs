@@ -122,8 +122,11 @@
         <h3>Admin Login</h3>
         <p>School Management System</p>
       </div>
-      <% if (info && info.length) { %>
-        <div class="alert alert-danger"><%= info[0] %></div>
+      <% if (info && info.length > 0) { %>
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <%= info[0] %>
+        </div>
       <% } %>
       <form action="/login/admin" method="post" autocomplete="off">
         <div class="mb-3">

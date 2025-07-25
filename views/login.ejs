@@ -214,6 +214,13 @@
             </div>
             
             <div class="login-body">
+                <% if (info && info.length > 0) { %>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <%= info[0] %>
+                    </div>
+                <% } %>
+                
                 <% if (typeof error !== 'undefined' && error) { %>
                     <div class="alert alert-danger">
                         <i class="fas fa-exclamation-triangle me-2"></i>
